@@ -1,0 +1,106 @@
+---
+title: "Fluctuating Turbidity Data Conversion"
+author: "Hannah Anderson"
+date: "2023-01-16"
+output: pdf_document
+---
+## Intro
+
+Data for this experiment was captured using vertically mounted cameras
+observing the movement of zebrafish in shallow waters. The videos were then
+processed using the automated tracking program TRex, which returns individual
+files for each tracked fish for each video. Here, we are taking these individual
+fish files and 1) converting the frame-by-frame data into summary statistics
+for each video and 2) combining the data from the 500+ files into a singular
+file.
+
+
+## Setup
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#setting the working directory
+knitr::opts_knit$set(root.dir = "E://2 Week Kaolin Turb Flux Experiment/datafiles_processed")
+library(tidyverse)
+```
+
+Setting up the code to be able to read in all of the files from a given
+directory. We are also creating a master data frame to contain all of the
+summary statistics.
+
+The definition of each variable in the original datafile is as follows:
+"tankID" = The ID of the tank chamber.In total there were eight 20-gallon tanks
+           divided into three evenly sized chambers each for a total of 24
+           tank chambers. Each of these tank chambers was fully isolated from
+           neighboring chambers so that no water passed through and shared walls
+           were opaque white. The IDs of the tank chambers occur in an X-Y
+           format, where X is the number of the overall tank and Y is the
+           individual chamber within the tank.
+"recording" = The recording number for that particular video. Recordings
+               started at Recording 1 and ended with Recording 9. Recording 6
+               was excluded from analysis due to being an unplanned extra set
+               of recordings.
+"mean_speed" = The mean speed of the group's collective movements. Excludes
+               frames where the fish was not detected.
+"activity_ratio" = The ratio of frames the fish collectively spent active versus
+                   inactive over the course of the video. Fish were defined as
+                   "inactive" if their speed was below XXX and "active" if their
+                   speed was XXX and above. Excludes frames where the fish was
+                   not detected.
+"speed_variance" = The variance of the speed of collectively all of the fish
+                   over the course of a single recording. Excludes frames
+                   where the fish was not detected.
+"max_speed" = The maximum speed any fish in a group reached over the course of
+              a recording.
+
+```{r file read in}
+list_csv <- list.files(pattern = "*.csv")
+masterframe <- data.frame(matrix(ncol = 6, nrow = (length(list_csv)/3)))
+colnames(masterframe) <- c("tankID", "recording",  "mean_speed", "activity_ratio",
+                           "speed_variance", "max_speed")
+```
+
+## Processing Files
+
+Here we are using a for-loop to individually process all of the files and
+combine them into a master file. For each video, TRex creates a datafile for
+each individual fish- in the case of this experiment, that means three fish
+per video. For analysis we are lumping all fish behaviors per group, and so the
+first part of the for-loop combines these three files into one dataframe. This
+combined dataframe is then prcoessed as a whole to create the summary statistics
+for each video.
+
+```{r loop, include = FALSE, message = FALSE}
+i = 1
+for (k in 1:(length(list_csv)/3)) {
+  #combining the individual fish files for each video and iterating with "i"
+  x1 <- read_csv(file = list_csv[i], col_select = (2:8))
+  i = i+1
+  x2 <- read_csv(list_csv[i], col_select = (2:8))
+  i = i+1
+  x3 <- read_csv(list_csv[i], col_select = (2:8))
+  x4 <- merge(x  = x1, y = x2, all = TRUE)
+  temp_all <- merge(x = x4, y = x3, all = TRUE)
+  
+  #TRex uses "inf" in rows where fish are not detected. Replacing them here
+  #with NAs for ease of use with R
+  temp_all[sapply(temp_all, is.infinite)] <- NA
+  
+  #taking the file name of the currently iterated file and splitting the name
+  #into the three sections divided by "_". The first and the third sections of
+  #each filename are the tank ID and the recording number, respectively
+  str_hold <- strsplit(list_csv[i], split = "_")
+  
+  #calculating the summary statistics and placing them in the correct place
+  #on the master dataframe
+  masterframe$tankID[k] <- str_hold[[1]][1]
+  masterframe$recording[k] <- str_hold[[1]][2]
+  masterframe$mean_speed[k] <- mean(temp_all$speed, na.rm = TRUE)
+  masterframe$activity_ratio[k] <- (sum(temp_all$speed >= 10, na.rm = TRUE)/
+                                    sum(temp_all < 10, na.rm = TRUE)) #these are place-holder values
+  masterframe$speed_variance[k] <- var(temp_all$speed, na.rm = TRUE)
+  masterframe$max_speed[k] <- max(temp_all$speed, na.rm = TRUE)
+
+  i = i+1
+}
+```
