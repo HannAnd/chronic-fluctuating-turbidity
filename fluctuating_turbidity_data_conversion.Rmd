@@ -20,7 +20,7 @@ file.
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 #setting the working directory
-knitr::opts_knit$set(root.dir = "E://2 Week Kaolin Turb Flux Experiment/datafiles_processed")
+knitr::opts_knit$set(root.dir = "D://2 Week Kaolin Turb Flux Experiment/datafiles_processed")
 library(tidyverse)
 ```
 
@@ -55,7 +55,7 @@ The definition of each variable in the original datafile is as follows:
 
 ```{r file read in}
 list_csv <- list.files(pattern = "*.csv")
-masterframe <- data.frame(matrix(ncol = 6, nrow = (length(list_csv)/3)))
+masterframe <- data.frame(matrix(ncol = 6, nrow = (length(list_csv)/3))) ##change with number of fish per group
 colnames(masterframe) <- c("tankID", "recording",  "mean_speed", "activity_ratio",
                            "speed_variance", "max_speed")
 ```
@@ -72,7 +72,7 @@ for each video.
 
 ```{r loop, include = FALSE, message = FALSE}
 i = 1
-for (k in 1:(length(list_csv)/3)) {
+for (k in 1:(length(list_csv)/3)) {  ##change with number of fish per group
   #combining the individual fish files for each video and iterating with "i"
   x1 <- read_csv(file = list_csv[i], col_select = (2:8))
   i = i+1
@@ -80,7 +80,9 @@ for (k in 1:(length(list_csv)/3)) {
   i = i+1
   x3 <- read_csv(list_csv[i], col_select = (2:8))
   x4 <- merge(x  = x1, y = x2, all = TRUE)
+  #x5 <- read_csv(list_csv[i], col_select = (2:8_))
   temp_all <- merge(x = x4, y = x3, all = TRUE)
+  #temp_all <- merge(x = temp_all, y = x5, all = TRUE)
   
   #TRex uses "inf" in rows where fish are not detected. Replacing them here
   #with NAs for ease of use with R
@@ -103,4 +105,6 @@ for (k in 1:(length(list_csv)/3)) {
 
   i = i+1
 }
+
+write_csv(masterframe, "D://2 Week Kaolin Turb Flux Experiment/two_week_flux_clay_movementdata.csv")
 ```
