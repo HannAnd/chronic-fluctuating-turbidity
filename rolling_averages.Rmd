@@ -46,6 +46,7 @@ fishlist <- lapply(fishlist, function(d) replace(d, TRUE, sapply(d, Inf2NA)))
 ```{r loop, include = FALSE, message = FALSE}
 
 i = 1
+#across the whole file list
 for (k in 1:(length(filelist)/fish)) {
   fourfish <- fishlist[i:(i+(fish-1))]
   i = i+fish
@@ -57,16 +58,15 @@ for (k in 1:(length(filelist)/fish)) {
   #all non-frame columns with NAs
   dfNA <- data.frame(frame = 0:maxframe, fish_detected = NA, angle = NA,
                      X = NA, Y = NA)
-
+  
+  #across one video of files
   for (z in 1:fish) {
     #finding the frame the fish datafile starts on
     minfish <- min(fourfish[[z]][,"frame"])
     #adding the NA rows from dfNA to the top of a file if its "frames" column
     #starts later than frame 0
     if (minfish > 0) {
-      #adding +1 to the minimum frame value because frames start at 0 in TRex
-      #but rows start at 1 in R
-      fourfish[[z]] <- rbind(dfNA[1:(minfish+1),], fourfish[[z]])
+      fourfish[[z]] <- rbind(dfNA[1:(minfish),], fourfish[[z]])
     }
     #finding the fame the fish datafile ends on
     maxfish <- max(fourfish[[z]][,"frame"])
@@ -74,37 +74,61 @@ for (k in 1:(length(filelist)/fish)) {
     #ends before the end of the video (the last frame of the longest datafile)
     #+1 for the same reason as above with minimum frames, +2 to avoid
     #duplicating the last frame
-    if (maxfish[z] < maxframe) {
+    if (maxfish < maxframe) {
+      #+2 to account for both the first frame being zero instead of 1 and to
+      #avoid duplicating the last frame, +1 to account for the first frame being
+      #a zero
       fourfish[[z]] <- rbind(fourfish[[z]], dfNA[(maxfish+2):(maxframe+1),])
       #test <- rbind(fourfish[[z]], dfNA[(maxfish+2):(maxframe+1),])
-      
+    }
     #a for loop inside a for loop inside a for loop...
     #this is starting to feel unnecessarily complicated. Oh well.
       
-    #the time step window (amount of time before and after a time step) being
-    #used in the moving average
-    #our videos are in ~30 frames per second (29.7 frames)
-    timew = 30    #window = 1 second
-    timestep = 1
-    #empty dataframe to add moving average values to
-    columns <- c("speed", "polarity")
-    workframe <- data.frame(matrix(nrow = 0, ncol = length(columns)))
-    colnames(workframe) <- columns
-      
-    for (t in 1:(maxframe/30)) {
+    #a dataframe to hold the distance values (calculated) and the polarity
+    #values (exported from TRex, in radians)
+    distpol <- data.frame(matrix(nrow = nrow(fourfish[[z]][,1]), ncol = 3))
+    colnames(distpol) <- c("frame", "distance", "polarity")
+    distpol$frame <- fourfish[[z]][,"frame"]      #need to change to number value  ####
+    distpol$polarity <- fourfish[[z]][,"angle"]   #rather than column name         ####
+    distpol <- as.data.frame(distpol)
+    
+    #within one fish's file
+    #calculating the distance values
+    for (t in 1:(maxframe-1)) {
     #Mistake here
     #What we need is a total distance moved across three seconds
       #That does NOT mean finding the distance between where the fish was at
       #the start of second one and where the fish was at the end of second three
       #It means finding the distance moved between every frame of those total
       #90 seconds
-      #ugh
-      
-    #workframe[t,"speed"] <- sqrt(((fourfish[[z]][(timestep+timew),"X"]) - 
-                                  #(fourfish[[z]][timestep,"X"]))^2 +
-                                 #((fourfish[[z]][(timestep+timew),"Y"]) - 
-                                  #(fourfish[[z]][timestep,"Y"]))^2)
+      distance <- sqrt(((fourfish[[z]][(t+1),"X"]) - (fourfish[[z]][t,"X"]))^2 +
+                      ((fourfish[[z]][(t+1),"Y"]) - (fourfish[[z]][t,"Y"]))^2)
+      distpol$distance[t+1] <- distance
     }
+    
+    #within one fish's file
+    #calculating the moving average of speed (we'll get to the others later)
+    rollvals <- data.frame(matrix(nrow = floor(maxframe/30)), ncol = 2)
+    colnames(rollvals) <- c("time_s", "speed")
+    #the time step window (amount of time before and after a time step) being
+    #used in the moving average
+    #our videos are in ~30 frames per second (29.7 frames)
+    timew = 30    #window = 1 second
+    timestep = 1
+    
+    #calculating iterations by taking the total number of frames in a file,
+    #dividing by the time window and rounding down to the nearest whole window.
+    #Then subtract two for the time windows that can't be calculated at the
+    #beginning and end of the file due to the nature of moving averages
+    
+    #rollspeed <- rollmean(distpol$distance, 90)
+    rollpol <- rollapply(distpol$polarity, width = 90, FUN = mean, by = 1, fill = NA, partial = TRUE)
+    
+    
+    #for (m in 1:(floor(maxframe/timew)-2)) {
+      #rollspeed <- sum(distpol[(timestep):((timestep-1)+(timew*3)),"distance"])
+      #rolltest <- colSums(distpol[1:90,"distance"])
+    #}
       
     }
   }
