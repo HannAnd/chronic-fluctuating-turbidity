@@ -13,13 +13,9 @@ processed using the automated tracking program TRex, which returns individual
 files for each tracked fish for each video. Here, we are taking these individual
 fish files and 1) converting the frame-by-frame data into summary statistics
 for each video and 2) combining the data from the 500+ files into a singular
-file. This file is used to export social data. See [insert filename] for the
-conversion of movement data. If using one file after the other make sure to
-clear the working environment as many variables are shared across files.
-
-This file will be used to export movement data. See [insert filename] for
-the conversion of social and shoaling data. If using one after the other make
-sure to clear the working environment as many variables are shared across files.
+file. This file is used to export social data. See data_conversion_movement.Rmd
+for the conversion of movement data. If using one file after the other make sure
+to clear the working environment as many variables are shared across files.
 
 
 ## Setup
@@ -36,6 +32,7 @@ knitr::opts_knit$set(root.dir = "D://2 Day Mini Kaolin Turb Flux Experiment/test
 library(tidyverse)
 library(data.table)
 library(zoo)
+library(pracma)
 #the number of fish per group
 fish = 4
 ```
@@ -67,7 +64,100 @@ In this file we are extracting social data. We do this by... something about
 X,Y coordinates and angles.
 
 ```{r loop, include = FALSE, message = FALSE}
-plot(pressure)
+i = 1
+for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
+  #combining the files from all fish per video to be analyzed collectively
+  shoal <- fishlist[i:(fish*i)]
+  i = i+1
+  
+  
+  ##standardizing the length of each fish's file in a video so all files start at
+  ##frame 0 and end at the last frame of the longest file
+  #determining the last frame of a video by taking the largest frame value
+  #from all of the fish datafiles
+  maxframe <- max(shoal[[1]][,"frame"])
+  #creating a dataframe filled with NAs to pad the missing frames from each file
+  dfNA <- data.frame(frame = 0:maxframe, fish_detected = NA, angle = NA,
+                     X = NA, Y = NA)
+  
+  for (z in 1:fish) { #across one video of files
+    
+    #finding the frame the fish datafile starts on
+    minfish <- min(shoal[[z]][, "frame"])
+    
+    #adding NA rows from dfNA to start of file when it starts on a frame later
+    #than 0
+    
+    if (minfish > 0) {
+      #across one fish file within a video
+      shoal[[z]] <- rbind(dfNA[1:(minfish), ], shoal[[z]])
+    }
+    
+    #finding the frame the fish datafile ends on
+    maxfish <- max(shoal[[z]][, "frame"])
+    
+    #adding NA rows from the dfNA to the end of a file when it ends earlier than
+    #the longest fish file from the video
+    if (maxfish < maxframe) {
+      #across one fish file within one video
+      shoal[[z]] <- rbind(shoal[[z]], dfNA[(maxfish + 2):(maxframe + 1), ])
+    }
+    
+    #empty dataframe to hold the social information as it's calculated
+    shoalinfo <- data.frame(matrix(nrow = maxframe+1, ncol = 5))
+    colnames(shoalinfo) <- c("frame", "nearest_neighbor", "farthest_neighbor",
+                             "shoal_area", "polarity")
+    shoalinfo$frame <- shoal[[z]][,"frame"]
+    
+    
+    for (a in 1:maxframe) {  #across one video of files
+      
+      #pulling the X,Y coordinates from each of the fish files in a video
+      coor <- data.frame(matrix(nrow = fish, ncol = 2))
+      colnames(coor) <- c("X", "Y")
+      for (p in 1:fish) {
+        coor$X[p] <- shoal[[p]][a,"X"]
+        coor$Y[p] <- shoal[[p]][a,"Y"]
+      }
+      
+      #from the coordinates, calculating the distances between all fish
+      distances <- as.vector(dist(coor))
+      #calculating the nearest neighbor distances
+      shoalinfo$nearest_neighbor[a] <- min(distances)
+      #calculating the farthest neighbor distances
+      shoalinfo$farthest_neighbor[a] <- max(distances)
+      
+      ##when I get to it the shoal area calculations will go here
+      
+      
+      #pulling the angle information from each of the fish files in a video
+        #angles are in radians
+      ##I could probably do this with an sapply(), but I'm too tired to figure
+      ##it out right now
+      ang <- vector()
+      for (r in 1:fish) {
+        ang[r] <- shoal[[r]][a,"angle"]
+      }
+      
+      #calculating the polarity (or variance of fish angles)
+        #lower values indicate higher polarity
+      shoalinfo$polarity[a] <- var(unlist(ang))
+    }
+    
+  }
+  
+      #Ok, so I need to calculate:
+      #1 The distance between fish. The smallest of these values is the
+         #nearest neighbors distance while the largest is the farthest neighbors
+      #2 The area of the shoal. I basically take the X,Y coordinates of each
+         #fish, put lines between them and then calculate area
+      #3 The polarity of the shoal. This means I need to take the angles from
+         #all of the fish in the shoal and calculate how similar they are
+    #To make this more complicated, I should probably throw in rolling averages
+    #for most if not all of this.
+    ##In order to make this work I need to load in all of the files per video
+    ##at once since they need to be cross-references
+  
+  
+}
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
