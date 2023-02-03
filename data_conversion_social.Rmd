@@ -1,0 +1,73 @@
+---
+title: "Fluctuating Turbidity Data Conversion for Sociality Tests"
+author: "Hannah Anderson"
+date: "2023-02-03"
+output: pdf_document
+---
+
+## Introduction
+
+Data for this experiment was captured using vertically mounted cameras
+observing the movement of zebrafish in shallow waters. The videos were then
+processed using the automated tracking program TRex, which returns individual
+files for each tracked fish for each video. Here, we are taking these individual
+fish files and 1) converting the frame-by-frame data into summary statistics
+for each video and 2) combining the data from the 500+ files into a singular
+file. This file is used to export social data. See [insert filename] for the
+conversion of movement data. If using one file after the other make sure to
+clear the working environment as many variables are shared across files.
+
+This file will be used to export movement data. See [insert filename] for
+the conversion of social and shoaling data. If using one after the other make
+sure to clear the working environment as many variables are shared across files.
+
+
+## Setup
+
+For our experiments fish occurred in either 3- or 4-fish groups. Change the
+value of "fish" in the following chunk to account for the number of fish in the
+experiment currently being analyzed.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#setting the working directory
+knitr::opts_knit$set(root.dir = "D://2 Day Mini Kaolin Turb Flux Experiment/testing")
+library(tidyverse)
+library(data.table)
+library(zoo)
+#the number of fish per group
+fish = 4
+```
+
+Setting up the code to be able to read in all of the files from a given
+directory. We are also changing the "Inf" values TRex uses in place of NAs to
+NAs and creating a master data frame to contain all of the summary statistics.
+
+```{r file read in, message = FALSE}
+#reading the file names into a list
+list_csv <- list.files(pattern = "*.csv")
+#from the list, creating a list of dataframes while excluding unused columns
+masterlist <- lapply(list_csv, read_csv, col_select = c(3:4, 6:8))
+#replacing the inf TRex uses in place of NAs with NAs
+Inf2NA <- function(v) replace(v, is.infinite(v), NA)
+fishlist <- lapply(masterlist, function(d) replace(d, TRUE, sapply(d, Inf2NA)))
+```
+
+## Processing Files
+
+The below code uses nested for-loops to process each of the datafiles and
+eventually combine them into a single master file. For each video, TRex creates
+a datafile for each detected fish- in the case of these experiments, that means
+three or four fish per video (depending on the experiment). For analysis we are
+lumping all fish behaviors across a group because individual identification is
+impossible.
+
+In this file we are extracting social data. We do this by... something about
+X,Y coordinates and angles.
+
+```{r loop, include = FALSE, message = FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

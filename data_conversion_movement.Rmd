@@ -1,0 +1,211 @@
+---
+title: "Fluctuating Turbidity Data Conversion"
+author: "Hannah Anderson"
+date: "2023-01-16"
+output: pdf_document
+---
+## Introduction
+
+Data for this experiment was captured using vertically mounted cameras
+observing the movement of zebrafish in shallow waters. The videos were then
+processed using the automated tracking program TRex, which returns individual
+files for each tracked fish for each video. Here, we are taking these individual
+fish files and 1) converting the frame-by-frame data into summary statistics
+for each video and 2) combining the data from the 500+ files into a singular
+file. This file is used to export movement data. See [insert filename] for
+the conversion of social and shoaling data. If using one file after the other
+make sure to clear the working environment as many variables are shared across
+files.
+
+
+## Setup
+
+For our experiments fish occurred in either 3- or 4-fish groups. Change the
+value of "fish" in the following chunk to account for the number of fish in the
+experiment currently being analyzed.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#setting the working directory
+knitr::opts_knit$set(root.dir = "D://2 Day Mini Kaolin Turb Flux Experiment/testing")
+library(tidyverse)
+library(data.table)
+library(zoo)
+#the number of fish per group
+fish = 4
+```
+
+Setting up the code to be able to read in all of the files from a given
+directory. We are also changing the "Inf" values TRex uses in place of NAs to
+NAs and creating a master data frame to contain all of the summary statistics.
+
+The definition of each variable in the original datafile is as follows:
+"tankID" = The ID of the tank chamber.In total there were eight 20-gallon tanks
+           divided into three evenly sized chambers each for a total of 24
+           tank chambers. Each of these tank chambers was fully isolated from
+           neighboring chambers so that no water passed through and shared walls
+           were opaque white. The IDs of the tank chambers occur in an X-Y
+           format, where X is the number of the overall tank and Y is the
+           individual chamber within the tank.
+"recording" = The recording number for that particular video. Recordings
+               started at Recording 1 and ended with Recording 9. Recording 6
+               was excluded from analysis due to being an unplanned extra set
+               of recordings.
+"mean_speed" = The mean speed of the group's collective movements. Excludes
+               frames where the fish was not detected.
+"activity_ratio" = The ratio of frames the fish collectively spent active versus
+                   inactive over the course of the video. Fish were defined as
+                   "inactive" if their speed was below XXX and "active" if their
+                   speed was XXX and above. Excludes frames where the fish was
+                   not detected.
+"speed_variance" = The variance of the speed of collectively all of the fish
+                   over the course of a single recording. Excludes frames
+                   where the fish was not detected.
+"max_speed" = The maximum speed any fish in a group reached over the course of
+              a recording.
+
+```{r file read in, message = FALSE}
+#reading the file names into a list
+list_csv <- list.files(pattern = "*.csv")
+#from the list, creating a list of dataframes while excluding unused columns
+masterlist <- lapply(list_csv, read_csv, col_select = c(3:4, 6:8))
+#replacing the inf TRex uses in place of NAs with NAs
+Inf2NA <- function(v) replace(v, is.infinite(v), NA)
+fishlist <- lapply(masterlist, function(d) replace(d, TRUE, sapply(d, Inf2NA)))
+#creating a dataframe to hold the final product
+finalframe <- data.frame(matrix(ncol = 7, nrow = (length(list_csv)/fish)))
+colnames(finalframe) <- c("tankID", "recording", "mean_speed", "activity_ratio",
+                          "speed_variance", "max_speed", "acceleration")
+```
+
+## Processing Files
+
+The below code uses nested for-loops to process each of the datafiles and
+eventually combine them into a single master file. For each video, TRex creates
+a datafile for each detected fish- in the case of these experiments, that means
+three or four fish per video (depending on the experiment). For analysis we are
+lumping all fish behaviors across a group because individual identification is
+impossible.
+
+In this file we are extracting movement data. We do this by first processing the
+X,Y coordinates of each fish into distances moved between frames, and from there
+we calculate speed and then acceleration. To correct for noise in the tracking
+process speed is calculated using a rolling average, with acceleration
+calculated from the corrected speed values.
+
+Once speed and acceleration have been calculated for each individual fish file
+they are combined and summarized into a master datafile containing information
+from all fish videos.
+
+```{r loop, include = FALSE, message = FALSE}
+i = 1
+for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
+  #combining the files from all fish per video to be analyzed collectively
+  shoal <- fishlist[i:(fish*i)]
+  i = i+1
+  
+  
+  ##standardizing the length of each fish's file in a video so all files start at
+  ##frame 0 and end at the last frame of the longest file
+  #determining the last frame of a video by taking the largest frame value
+  #from all of the fish datafiles
+  maxframe <- max(shoal[[1]][,"frame"])
+  #creating a dataframe filled with NAs to pad the missing frames from each file
+  dfNA <- data.frame(frame = 0:maxframe, fish_detected = NA, angle = NA,
+                     X = NA, Y = NA)
+  
+  #creating a blank dataframe to hold the processed fish files from a video as
+  #they are completed
+  tempshoal <- data.frame(matrix(ncol = 2, nrow = 0))
+  colnames(tempshoal) <- c("time", "speed")
+  
+  for (z in 1:fish) {  #across one video of files
+    
+    #finding the frame the fish datafile starts on
+    minfish <- min(shoal[[z]][,"frame"])
+    
+    #adding NA rows from dfNA to start of file when it starts on a frame later
+    #than 0
+   
+     if (minfish > 0) {  #across one fish file within a video
+      shoal[[z]] <- rbind(dfNA[1:(minfish),], shoal[[z]])
+    }
+    
+    #finding the frame the fish datafile ends on
+    maxfish <- max(shoal[[z]][,"frame"])
+    
+    #adding NA rows from the dfNA to the end of a file when it ends earlier than
+    #the longest fish file from the video
+    if (maxfish < maxframe) {  #across one fish file within one video
+      shoal[[z]] <- rbind(shoal[[z]], dfNA[(maxfish+2):(maxframe+1),])
+    }
+    
+
+    #calculating the base distance moved between frames with no correcting
+    dist <- data.frame(matrix(nrow = nrow(shoal[[z]]), ncol = 2))
+    colnames(dist) <- c("frame", "distance_cm")
+    dist$frame <- shoal[[z]][,"frame"]
+    for (t in 1:(maxframe-1)) {  #within one fish's file
+      dist$distance_cm[t+1] <- sqrt(
+                    ((shoal[[z]][(t+1),"X"]) - (shoal[[z]][t,"X"]))^2 +
+                    ((shoal[[z]][(t+1),"Y"]) - (shoal[[z]][t,"Y"]))^2)
+    }
+    #not sure why, but R has classified "distance_cm" as a list, so converting
+    #it to a usable numeric class here
+    dist$distance_cm <- as.numeric(dist$distance_cm)
+    
+    #calculating the base speed of the fish each second with no correcting
+    simpspeed <- data.frame(matrix(nrow = floor(nrow(dist)/30), ncol = 2))
+    colnames(simpspeed) <- c("time", "speed")
+    simpspeed$time <- 1:(floor(nrow(dist)/30))
+    #videos are ~30 frames per second (29.7 frames), using floor() to round down
+    #to the nearest whole second
+    n = 1
+    for (s in 1:(floor(nrow(dist)/30))) {  #within one fish's file
+      simpspeed$speed[s] <- sum(dist$distance_cm[n:(s*30)], na.rm = TRUE)
+      n = n + 30
+    }
+  
+    #correcting for noise in fish detection by calculating a rolling average speed
+    rollspeed <- data.frame(matrix(nrow = floor(maxframe/30), ncol = 3))
+    colnames(rollspeed) <- c("time", "speed", "acceleration")
+    rollspeed$time <- 1:(floor(nrow(dist)/30))
+    #using the rollapply() function from the package "zoo"
+    #rollapply() handles NAs better than rollmean()
+    #using the default centered alignment of the rolling window
+    #excluding NAs from the averaging but including them as time points in the
+      #window
+    rollspeed$speed <- rollapply(simpspeed$speed, width = 7, FUN = function(x)
+                                 mean(x, na.rm = TRUE), partial = TRUE, fill = NA)
+      #this window value is arbitrary, might be worth piloting to figure out a
+      #better one
+    
+    for (a in 1:((nrow(rollspeed))-1)) {
+      rollspeed$acceleration[a+1] <- rollspeed$speed[a+1] - rollspeed$speed[a]
+    }
+    
+    
+    #combining the now completed rolling mean speed to a temporary holding frame
+    tempshoal <- merge(x = tempshoal, y = rollspeed, all = TRUE)
+  
+  }
+  #taking the file name of the currently iterated file and splitting the name
+  #into the three sections divided by "_". The first and the third sections of
+  #each filename are the tank ID and the recording number, respectively
+  str_hold <- strsplit(list_csv[i], split = "_")
+  
+  #calculating the summary statistics and placing them in the correct place
+  #on the master dataframe
+  finalframe$tankID[k] <- str_hold[[1]][1]
+  finalframe$recording[k] <- str_hold[[1]][2]
+  finalframe$mean_speed[k] <- mean(tempshoal$speed, na.rm = TRUE)
+  finalframe$activity_ratio[k] <- (sum(tempshoal$speed >= 10, na.rm = TRUE)/
+                                    sum(tempshoal < 10, na.rm = TRUE)) #these are place-holder values
+  finalframe$speed_variance[k] <- var(tempshoal$speed, na.rm = TRUE)
+  finalframe$max_speed[k] <- max(tempshoal$speed, na.rm = TRUE)
+  finalframe$acceleration[k] <- mean(tempshoal$acceleration, na.rm = TRUE)
+}
+
+write_csv(finalframe, "D://2 Day Mini Kaolin Turb Flux Experiment/test.csv")
+```
