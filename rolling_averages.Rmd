@@ -87,24 +87,10 @@ for (k in 1:(length(filelist)/fish)) {  #across the whole file list
     dist <- data.frame(matrix(nrow = nrow(fourfish[[z]]), ncol = 2))
     colnames(dist) <- c("frame", "distance_cm")
     dist$frame <- fourfish[[z]][,"frame"]
-      
-    #a dataframe to hold the distance values (calculated) and the polarity
-    #values (exported from TRex, in radians)
-    #distpol <- data.frame(matrix(nrow = nrow(fourfish[[z]][,1]), ncol = 3))
-    #colnames(distpol) <- c("frame", "distance", "polarity")
-    #distpol$frame <- fourfish[[z]][,"frame"]      #need to change to number value  ####
-    #distpol$polarity <- fourfish[[z]][,"angle"]   #rather than column name         ####
-    #distpol <- as.data.frame(distpol)
     
     #within one fish's file
     #calculating the distance values
     for (t in 1:(maxframe-1)) {
-    #Mistake here
-    #What we need is a total distance moved across three seconds
-      #That does NOT mean finding the distance between where the fish was at
-      #the start of second one and where the fish was at the end of second three
-      #It means finding the distance moved between every frame of those total
-      #90 seconds
       move <- sqrt(((fourfish[[z]][(t+1),"X"]) - (fourfish[[z]][t,"X"]))^2 +
                       ((fourfish[[z]][(t+1),"Y"]) - (fourfish[[z]][t,"Y"]))^2)
       dist$distance_cm[t+1] <- move
@@ -120,7 +106,7 @@ for (k in 1:(length(filelist)/fish)) {  #across the whole file list
     #and using floor() to round down to the nearest whole second
     n = 1
     for (s in 1:(floor(nrow(dist)/30))) {
-      simpspeed$speed[s] <- sum(dist$distance_cm[n:(s*30)])
+      simpspeed$speed[s] <- sum(dist$distance_cm[n:(s*30)], na.rm = TRUE)
       n = n + 30
     }
     
