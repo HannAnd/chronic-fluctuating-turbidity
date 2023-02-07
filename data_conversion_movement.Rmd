@@ -102,15 +102,13 @@ from all fish videos.
 i = 1
 for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   #combining the files from all fish per video to be analyzed collectively
-  shoal <- fishlist[i:(fish*i)]
-  i = i+fish
-  
+  shoal <- fishlist[i:(i+fish-1)]
   
   ##standardizing the length of each fish's file in a video so all files start at
   ##frame 0 and end at the last frame of the longest file
   #determining the last frame of a video by taking the largest frame value
   #from all of the fish datafiles
-  maxframe <- max(shoal[[1]][,"frame"])
+  maxframe <- max(unlist(lapply(shoal, function(m) m[,"frame"])))
   #creating a dataframe filled with NAs to pad the missing frames from each file
   dfNA <- data.frame(frame = 0:maxframe, fish_detected = NA, angle = NA,
                      X = NA, Y = NA)
@@ -205,6 +203,8 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   finalframe$speed_variance[k] <- var(tempshoal$speed, na.rm = TRUE)
   finalframe$max_speed[k] <- max(tempshoal$speed, na.rm = TRUE)
   finalframe$acceleration[k] <- mean(tempshoal$acceleration, na.rm = TRUE)
+  
+  i = i+fish
 }
 
 write_csv(finalframe, "D://2 Day Mini Kaolin Turb Flux Experiment/test.csv")
