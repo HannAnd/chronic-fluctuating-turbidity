@@ -131,44 +131,39 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
     #adding NA rows from the dfNA to the end of a file when it ends earlier than
     #the longest fish file from the video
     if (maxfish < maxframe) {  #across one fish file within one video
+      #+2 to avoid duplicating last row and account for first frame being 0,
+      #+1 to account for first frame being 0
       shoal[[z]] <- rbind(shoal[[z]], dfNA[(maxfish+2):(maxframe+1),])
     }
-    
-    
-    #creating a blank dataframe to hold the processed fish files from a video as
-    #they are completed
-    tempshoal <- data.frame(matrix(ncol = 2, nrow = 0))
-    colnames(tempshoal) <- c("time", "speed")
 
     #calculating the base distance moved between frames with no correcting
-    dist <- data.frame(matrix(nrow = nrow(shoal[[z]]), ncol = 2))
-    colnames(dist) <- c("frame", "distance_cm")
-    dist$frame <- shoal[[z]][,"frame"]
+    dista <- data.frame(matrix(nrow = nrow(shoal[[z]]), ncol = 2))
+    colnames(dista) <- c("frame", "distance_cm")
+    dista$frame <- shoal[[z]][,"frame"]
     for (t in 1:(maxframe-1)) {  #within one fish's file
-      dist$distance_cm[t+1] <- sqrt(
+      dista$distance_cm[t+1] <- sqrt(
                     ((shoal[[z]][(t+1),"X"]) - (shoal[[z]][t,"X"]))^2 +
                     ((shoal[[z]][(t+1),"Y"]) - (shoal[[z]][t,"Y"]))^2)
     }
-    #not sure why, but R has classified "distance_cm" as a list, so converting
-    #it to a usable numeric class here
-    dist$distance_cm <- as.numeric(dist$distance_cm)
+    #R has classifies "distance_cm" as a list, so unlisting here
+    dista$distance_cm <- unlist(dista$distance_cm)
     
     #calculating the base speed of the fish each second with no correcting
-    simpspeed <- data.frame(matrix(nrow = floor(nrow(dist)/30), ncol = 2))
+    simpspeed <- data.frame(matrix(nrow = floor(nrow(dista)/30), ncol = 2))
     colnames(simpspeed) <- c("time", "speed")
-    simpspeed$time <- 1:(floor(nrow(dist)/30))
+    simpspeed$time <- 1:(floor(nrow(dista)/30))
     #videos are ~30 frames per second (29.7 frames), using floor() to round down
     #to the nearest whole second
     n = 1
-    for (s in 1:(floor(nrow(dist)/30))) {  #within one fish's file
-      simpspeed$speed[s] <- sum(dist$distance_cm[n:(s*30)], na.rm = TRUE)
+    for (s in 1:(floor(nrow(dista)/30))) {  #within one fish's file
+      simpspeed$speed[s] <- sum(dista$distance_cm[n:(s*30)], na.rm = TRUE)
       n = n + 30
     }
   
     #correcting for noise in fish detection by calculating a rolling average speed
     rollspeed <- data.frame(matrix(nrow = floor(maxframe/30), ncol = 3))
     colnames(rollspeed) <- c("time", "speed", "acceleration")
-    rollspeed$time <- 1:(floor(nrow(dist)/30))
+    rollspeed$time <- simpspeed$time
     #using the rollapply() function from the package "zoo"
     #rollapply() handles NAs better than rollmean()
     #using the default centered alignment of the rolling window
@@ -180,12 +175,9 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
       #better one
     
     for (a in 1:((nrow(rollspeed))-1)) {
+      #change in time is 1 second, so no need to divide
       rollspeed$acceleration[a+1] <- rollspeed$speed[a+1] - rollspeed$speed[a]
     }
-    
-    
-    #combining the now completed rolling mean speed to a temporary holding frame
-    tempshoal <- merge(x = tempshoal, y = rollspeed, all = TRUE)
   
   }
   #taking the file name of the currently iterated file and splitting the name
@@ -197,12 +189,12 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   #on the master dataframe
   finalframe$tankID[k] <- str_hold[[1]][1]
   finalframe$recording[k] <- str_hold[[1]][2]
-  finalframe$mean_speed[k] <- mean(tempshoal$speed, na.rm = TRUE)
-  finalframe$activity_ratio[k] <- (sum(tempshoal$speed >= 10, na.rm = TRUE)/
-                                    sum(tempshoal < 10, na.rm = TRUE)) #these are place-holder values
-  finalframe$speed_variance[k] <- var(tempshoal$speed, na.rm = TRUE)
-  finalframe$max_speed[k] <- max(tempshoal$speed, na.rm = TRUE)
-  finalframe$acceleration[k] <- mean(tempshoal$acceleration, na.rm = TRUE)
+  finalframe$mean_speed[k] <- mean(rollspeed$speed, na.rm = TRUE)
+  finalframe$activity_ratio[k] <- (sum(rollspeed$speed >= 10, na.rm = TRUE)/
+                                    sum(rollspeed < 10, na.rm = TRUE)) #these are place-holder values
+  finalframe$speed_variance[k] <- var(rollspeed$speed, na.rm = TRUE)
+  finalframe$max_speed[k] <- max(rollspeed$speed, na.rm = TRUE)
+  finalframe$max_acceleration[k] <- max(rollspeed$acceleration, na.rm = TRUE)
   
   i = i+fish
 }
