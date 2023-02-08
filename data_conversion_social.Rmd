@@ -49,6 +49,10 @@ masterlist <- lapply(list_csv, read_csv, col_select = c(3:4, 6:8))
 #replacing the inf TRex uses in place of NAs with NAs
 Inf2NA <- function(v) replace(v, is.infinite(v), NA)
 fishlist <- lapply(masterlist, function(d) replace(d, TRUE, sapply(d, Inf2NA)))
+finalframe <- data.frame(matrix(ncol = 7, nrow = (length(list_csv)/fish)))
+colnames(finalframe) <- c("tankID", "recording", "nearest_neighbor",
+                          "farthest_neighbor", "shoal_area", "shoal_area_var",
+                          "polarity")
 ```
 
 ## Processing Files
@@ -154,21 +158,45 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   }  #a loop
   
     #put the rolling average calculations here
-
-    
-   ###still need to make these rolling averages, but we'll get there 
   
-      #Ok, so I need to calculate:
-      #1 The distance between fish. The smallest of these values is the
-         #nearest neighbors distance while the largest is the farthest neighbors
-      #2 The area of the shoal. I basically take the X,Y coordinates of each
-         #fish, put lines between them and then calculate area
-      #3 The polarity of the shoal. This means I need to take the angles from
-         #all of the fish in the shoal and calculate how similar they are
-    #To make this more complicated, I should probably throw in rolling averages
-    #for most if not all of this.
-    ##In order to make this work I need to load in all of the files per video
-    ##at once since they need to be cross-references
+  #creating an empty dataframe to hold the rolling averages of neighbor
+  #distances
+  rolldist <- data.frame(matrix(nrow = nrow(shoal[[1]]), ncol = 6))
+  colnames(rolldist) <- c(1:6)
+  #calculating the rolling averages for neighbor distances
+  for (r in 1:6) {
+    rolldist[r] <- rollapply(distances[,r], width = 7, FUN = function(x)
+                             mean(x, na.rm = TRUE), partial = TRUE, fill = NA)
+  }
+    
+  #creating an empty dataframe to hold the rolling averages for polarity and
+  #shoal area
+  roll.polarea <- data.frame(matrix(nrow = nrow(shoal[[1]]), ncol = 2))
+  colnames(roll.polarea) <- c("shoal_area", "polarity")
+  #calculating the rolling mean for shoal area
+  roll.polarea$shoal_area <- rollapply(shoal.angle$shoal_area, width = 7,
+                                       FUN = function(x) mean(x, na.rm = TRUE),
+                                       partial = TRUE, fill = NA)
+  #calculating the rolling mean for polarity
+  roll.polarea$polarity <- rollapply(shoal.angle$polarity, width = 7,
+                                       FUN = function(x) mean(x, na.rm = TRUE),
+                                       partial = TRUE, fill = NA)
+  
+  #still need to pull out the max and min neighbor distances, but everything
+  #else seems to be working as expected (I hope)
+  
+  str_hold <- strsplit(list_csv[i], split = "_")
+  
+  finalframe$tankID[k] <- str_hold[[1]][1]
+  finalframe$recording[k] <- str_hold[[1]][2]
+  finalframe$nearest_neighbor[k] <- min(unlist(rolldist, use.names = FALSE),
+                                     na.rm = TRUE)
+  finalframe$farthest_neighbor[k] <- max(unlist(rolldist, use.names = FALSE),
+                                      na.rm = TRUE)
+  finalframe$shoal_area[k] <- mean(roll.polarea$shoal_area, na.rm = TRUE)
+  #this value seems wrong...
+  finalframe$shoal_area_var[k] <- var(roll.polarea$shoal_area, na.rm = TRUE)
+  finalframe$polarity[k] <- mean(roll.polarea$polarity, na.rm = TRUE)
   
   i = i+fish
 }  #k loop
