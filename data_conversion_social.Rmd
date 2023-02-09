@@ -33,6 +33,7 @@ library(tidyverse)
 library(data.table)
 library(zoo)
 library(sf)
+library(circular)
 #the number of fish per group
 fish = 4
 ```
@@ -51,7 +52,7 @@ Inf2NA <- function(v) replace(v, is.infinite(v), NA)
 fishlist <- lapply(masterlist, function(d) replace(d, TRUE, sapply(d, Inf2NA)))
 finalframe <- data.frame(matrix(ncol = 7, nrow = (length(list_csv)/fish)))
 colnames(finalframe) <- c("tankID", "recording", "nearest_neighbor",
-                          "farthest_neighbor", "shoal_area", "shoal_area_var",
+                          "farthest_neighbor", "shoal_area",
                           "polarity")
 ```
 
@@ -116,8 +117,7 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   
   
   #calculating nearest and farthest neighbor, polarity and shoal area
-  for (a in 1:(maxframe + 1)) {
-    #across one video of files
+  for (a in 1:(maxframe + 1)) {  #across one video of files
     
     #pulling the X,Y coordinates from each of the fish files in a video
     coor <- data.frame(matrix(nrow = fish, ncol = 2))
@@ -152,12 +152,17 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
     
     
     #calculating polarity, which is the variance of fish angles
-      #only calculates when all fish are detected
-    shoal.angle$polarity[a] <- var(unlist(lapply(shoal,
-                                                 function(v) v[a,"angle"])))
+      #since this data is in radians we're using circular variance
+    
+    #converting the data into a "circular" object
+    circ <- suppressWarnings(as.circular(unlist(lapply(shoal, function(v) v[a,"angle"])),
+                         type = "angles", units = "radians", rotation = "clock",
+                        zero = 0))
+    shoal.angle$polarity[a] <- var.circular(circ)
   }  #a loop
   
-    #put the rolling average calculations here
+  
+  #correcting for noise in TRex readings using rolling averages
   
   #creating an empty dataframe to hold the rolling averages of neighbor
   #distances
@@ -182,8 +187,6 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
                                        FUN = function(x) mean(x, na.rm = TRUE),
                                        partial = TRUE, fill = NA)
   
-  #still need to pull out the max and min neighbor distances, but everything
-  #else seems to be working as expected (I hope)
   
   str_hold <- strsplit(list_csv[i], split = "_")
   
@@ -193,9 +196,10 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
                                      na.rm = TRUE)
   finalframe$farthest_neighbor[k] <- max(unlist(rolldist, use.names = FALSE),
                                       na.rm = TRUE)
+  finalframe$mean_neighbor[k] <- mean(unlist(rolldist, use.names = FALSE),
+                                      na.rm = TRUE)
   finalframe$shoal_area[k] <- mean(roll.polarea$shoal_area, na.rm = TRUE)
-  #this value seems wrong...
-  finalframe$shoal_area_var[k] <- var(roll.polarea$shoal_area, na.rm = TRUE)
+  finalframe$shoal_area_sd[k] <- stats::sd(roll.polarea$shoal_area, na.rm = TRUE)
   finalframe$polarity[k] <- mean(roll.polarea$polarity, na.rm = TRUE)
   
   i = i+fish
