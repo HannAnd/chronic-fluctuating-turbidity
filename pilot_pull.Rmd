@@ -1,0 +1,158 @@
+---
+title: "Extracting Fish Speeds for Piloting"
+author: "Hannah Anderson"
+date: "2023-02-09"
+output: pdf_document
+---
+
+## Introduction
+
+See data_conversion_social.Rmd or data_conversion_movement.Rmd for full intro.
+
+This code is only to export files containing speed values that can be
+cross-referenced with the original videos to calibrate above which speed fish
+should be classified as "active" and below which they should be classified as
+"inactive," which will be used to create a ratio of time spend inactive versus
+active for each recording.
+
+
+## Setup
+
+For our experiments fish occurred in either 3- or 4-fish groups. Change the
+value of "fish" in the following chunk to account for the number of fish in the
+video being processed. Please also change the directories to correspond to
+the appropriate filepaths you are using.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#setting the working directory
+knitr::opts_knit$set(root.dir = "D://2 Day Mini Kaolin Turb Flux Experiment/pilottest")
+library(tidyverse)
+library(zoo)
+
+#the folder you want the exported file to go
+enddir <- ("D://2 Day Mini Kaolin Turb Flux Experiment")
+
+#the number of fish in a group
+fish = 4
+```
+
+## Setup Continued
+
+The below chunk sets up the files and dataframes to be used for the rest of the
+script.
+
+```{r file import, message = FALSE}
+#reading the file names into a list
+list_csv <- list.files(pattern = "*.csv")
+masterlist <- lapply(list_csv, read_csv, col_select = c(3:4, 6:8))
+#replacing the inf TRex uses in place of NAs with NAs
+Inf2NA <- function(v) replace(v, is.infinite(v), NA)
+fishlist <- lapply(masterlist, function(d) replace(d, TRUE, sapply(d, Inf2NA)))
+
+#extracting the tank ID and recording number from the original file name to be
+#used in naming the exported file from this code
+str_hold <- strsplit(list_csv[1], split = "_")
+#creating column names for each fish in the group
+whichfish <- paste0("fish", 1:fish)
+
+#creating the dataframes that will hold the final version of the data
+finalframe <- data.frame(matrix(ncol = fish+1, nrow = 0))
+colnames(finalframe) <- c("second", whichfish)
+rollfinal <- finalframe
+```
+
+## Standardizing File Lengths
+
+For each video, TRex creates a datafile for each detected fish- in the case of
+these experiments, that means three or four fish per video (depending on the
+experiment). However, each fish file starts at the first frame the fish is
+detected and ends at the last frame the fish is detected rather than at the
+beginning and end of the video. The below chunk standardizes the lengths of
+the fish files so they are all the same by having them all start on the first
+frame of the video (frame 0) and ending on the latest frame any fish was
+detected.
+
+```{r standardizing, include = FALSE, message = FALSE}
+for (k in 1:(fish)) {
+  shoal <- fishlist[1:(fish)]
+  #determining the last frame of a video by taking the largest frame value
+  #from all of the fish datafiles
+  maxframe <- max(unlist(lapply(shoal, function(m) m[,"frame"])))
+  #creating a dataframe filled with NAs to pad the missing frames from each file
+  dfNA <- data.frame(frame = 0:maxframe, fish_detected = NA, angle = NA,
+                     X = NA, Y = NA)
+  
+  for (z in 1:fish) {
+     #finding the frame the fish datafile starts on
+    minfish <- min(shoal[[z]][,"frame"])
+    
+    #adding NA rows from dfNA to start of file when it starts on a frame later
+    #than 0
+   
+     if (minfish > 0) {  #across one fish file within a video
+      shoal[[z]] <- rbind(dfNA[1:(minfish),], shoal[[z]])
+    }
+    
+    #finding the frame the fish datafile ends on
+    maxfish <- max(shoal[[z]][,"frame"])
+    
+    #adding NA rows from the dfNA to the end of a file when it ends earlier than
+    #the longest fish file from the video
+    if (maxfish < maxframe) {  #across one fish file within one video
+      #+2 to avoid duplicating last row and account for first frame being 0,
+      #+1 to account for first frame being 0
+      shoal[[z]] <- rbind(shoal[[z]], dfNA[(maxfish+2):(maxframe+1),])
+    }
+  }  #for loop Z
+}  #for loop k
+```
+
+## Speed Calculations
+
+The below chunk calculates the speed of all fish in a video from the detected
+fish coordinates provided by TRex.
+
+```{r speed, include = FALSE, message = FALSE}
+#creating an empty dataframe to hold the distance values
+dista <- data.frame(matrix(nrow = nrow(shoal[[z]]), ncol = (fish+1)))
+colnames(dista) <- c("frame", whichfish)
+dista$frame <- shoal[[z]][,"frame"]
+#calculating the distances moved between frames with no corrections
+for (t in 1:(maxframe-1)) {  #within one fish's file
+  for (f in 1:(length(whichfish))) {
+    dista[(t+1),whichfish[f]] <- sqrt(
+                          ((shoal[[f]][(t+1),"X"]) - (shoal[[f]][t,"X"]))^2 +
+                          ((shoal[[f]][(t+1),"Y"]) - (shoal[[f]][t,"Y"]))^2)
+  }  #for loop f
+}  #for loop t
+#R has classified these distance columns as lists, so unlisting here
+dista[,2:(fish+1)] <- unlist(dista[,2:(fish+1)])
+
+
+#calculating the base speed of the fish each second with no correcting
+n = 1
+for (s in 1:(floor(nrow(dista))/30)) {
+  for (w in 1:fish) {
+      finalframe[s,whichfish[w]] <- sum(dista[n:(s*30),whichfish[w]],
+                                        na.rm = TRUE)
+  }
+}
+
+#correcting for noise in the calculated fish speeds using rolling means
+for (r in 1:fish) {
+  rollfinal[,whichfish[r]] <- rollapply(finalframe[,whichfish[r]], width = 7,
+                                        FUN = function(x) mean (x, na.rm = TRUE),
+                                        partial = TRUE, fill = NA)
+}
+
+finalframe$second <- 1:(nrow(finalframe))
+rollfinal$second <- 1:(nrow(finalframe))
+
+write_csv(finalframe, file.path(enddir, paste0((paste("base_speed", str_hold[[1]][1],
+                                        str_hold[[1]][2], sep = "_")), ".csv")))
+write_csv(rollfinal, file.path(enddir, paste0((paste("rolling_speed", str_hold[[1]][1],
+                                        str_hold[[1]][2], sep = "_")), ".csv")))
+```
+
