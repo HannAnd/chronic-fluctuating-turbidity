@@ -28,7 +28,7 @@ experiment currently being analyzed.
 knitr::opts_chunk$set(echo = TRUE)
 
 #setting the working directory
-knitr::opts_knit$set(root.dir = "D://2 Day Mini Kaolin Turb Flux Experiment/testing")
+knitr::opts_knit$set(root.dir = "D://2 Week Kaolin Turb Flux Experiment/datafiles_processed")
 library(tidyverse)
 library(data.table)
 library(zoo)
@@ -50,10 +50,10 @@ masterlist <- lapply(list_csv, read_csv, col_select = c(3:4, 6:8))
 #replacing the inf TRex uses in place of NAs with NAs
 Inf2NA <- function(v) replace(v, is.infinite(v), NA)
 fishlist <- lapply(masterlist, function(d) replace(d, TRUE, sapply(d, Inf2NA)))
-finalframe <- data.frame(matrix(ncol = 7, nrow = (length(list_csv)/fish)))
-colnames(finalframe) <- c("tankID", "recording", "nearest_neighbor",
-                          "farthest_neighbor", "shoal_area",
-                          "polarity")
+finalframe <- data.frame(matrix(ncol = 9, nrow = (length(list_csv)/fish)))
+colnames(finalframe) <- c("tankID", "treatment", "recording", "polarity",
+                          "shoal_area", "shoal_area_sd", "nearest_neighbor",
+                          "farthest_neighbor", "mean_neighbor")
 ```
 
 ## Processing Files
@@ -200,8 +200,12 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
                                       na.rm = TRUE)
   finalframe$shoal_area[k] <- mean(roll.polarea$shoal_area, na.rm = TRUE)
   finalframe$shoal_area_sd[k] <- stats::sd(roll.polarea$shoal_area, na.rm = TRUE)
-  finalframe$polarity[k] <- mean(roll.polarea$polarity, na.rm = TRUE)
+  #high circular variance equals low polarity, so subtracting the variance from
+  #one to make the values more intuitive
+  finalframe$polarity[k] <- 1 - (mean(roll.polarea$polarity, na.rm = TRUE))
   
   i = i+fish
 }  #k loop
+
+write_csv(finalframe, "D://2 Day Mini Kaolin Turb Flux Experiment/2day_clay_social_data.csv")
 ```
