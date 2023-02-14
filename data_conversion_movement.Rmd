@@ -28,7 +28,7 @@ experiment currently being analyzed.
 knitr::opts_chunk$set(echo = TRUE)
 
 #setting the working directory
-knitr::opts_knit$set(root.dir = "D://2 Day Mini Kaolin Turb Flux Experiment/testing")
+knitr::opts_knit$set(root.dir = "D://2 Day Mini Kaolin Turb Flux Experiment/datafiles_processed")
 library(tidyverse)
 library(data.table)
 library(zoo)
@@ -76,7 +76,7 @@ fishlist <- lapply(masterlist, function(d) replace(d, TRUE, sapply(d, Inf2NA)))
 #creating a dataframe to hold the final product
 finalframe <- data.frame(matrix(ncol = 7, nrow = (length(list_csv)/fish)))
 colnames(finalframe) <- c("tankID", "recording", "mean_speed", "activity_ratio",
-                          "speed_variance", "max_speed", "acceleration")
+                          "speed_variance", "max_speed", "max_acceleration")
 ```
 
 ## Processing Files
@@ -136,10 +136,11 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
       shoal[[z]] <- rbind(shoal[[z]], dfNA[(maxfish+2):(maxframe+1),])
     }
 
-    #calculating the base distance moved between frames with no correcting
+    #creating an empty dataframe to hold the distance values
     dista <- data.frame(matrix(nrow = nrow(shoal[[z]]), ncol = 2))
     colnames(dista) <- c("frame", "distance_cm")
     dista$frame <- shoal[[z]][,"frame"]
+    #calculating the base distance moved between frames with no corrections
     for (t in 1:(maxframe-1)) {  #within one fish's file
       dista$distance_cm[t+1] <- sqrt(
                     ((shoal[[z]][(t+1),"X"]) - (shoal[[z]][t,"X"]))^2 +
@@ -161,7 +162,7 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
     }
   
     #correcting for noise in fish detection by calculating a rolling average speed
-    rollspeed <- data.frame(matrix(nrow = floor(maxframe/30), ncol = 3))
+    rollspeed <- data.frame(matrix(nrow = nrow(simpspeed), ncol = 3))
     colnames(rollspeed) <- c("time", "speed", "acceleration")
     rollspeed$time <- simpspeed$time
     #using the rollapply() function from the package "zoo"
@@ -199,5 +200,5 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   i = i+fish
 }
 
-write_csv(finalframe, "D://2 Day Mini Kaolin Turb Flux Experiment/test.csv")
+write_csv(finalframe, "D://2 Day Mini Kaolin Turb Flux Experiment/2day_clay_movement_data.csv")
 ```
