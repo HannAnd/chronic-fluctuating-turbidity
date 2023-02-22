@@ -27,12 +27,12 @@ the appropriate filepaths you are using.
 knitr::opts_chunk$set(echo = TRUE)
 
 #setting the working directory
-knitr::opts_knit$set(root.dir = "D://2 Day Mini Kaolin Turb Flux Experiment/pilottest")
+knitr::opts_knit$set(root.dir = "E://2 Day Mini Kaolin Turb Flux Experiment/pilotfile/current")
 library(tidyverse)
 library(zoo)
 
 #the folder you want the exported file to go
-enddir <- ("D://2 Day Mini Kaolin Turb Flux Experiment")
+enddir <- ("E://2 Day Mini Kaolin Turb Flux Experiment/pilotfile")
 
 #the number of fish in a group
 fish = 4
