@@ -130,7 +130,6 @@ for (t in 1:(maxframe-1)) {  #within one fish's file
 #R has classified these distance columns as lists, so unlisting here
 dista[,2:(fish+1)] <- unlist(dista[,2:(fish+1)])
 
-
 #calculating the base speed of the fish each second with no correcting
 n = 1
 for (s in 1:(floor(nrow(dista))/30)) {
@@ -139,6 +138,9 @@ for (s in 1:(floor(nrow(dista))/30)) {
                                         na.rm = TRUE)
   }
 }
+
+#making rollfinal the same length as finalframe
+rollfinal[nrow(finalframe),] <- NA
 
 #correcting for noise in the calculated fish speeds using rolling means
 for (r in 1:fish) {
