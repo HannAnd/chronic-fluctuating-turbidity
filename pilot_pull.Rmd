@@ -137,6 +137,7 @@ for (s in 1:(floor(nrow(dista))/30)) {
       finalframe[s,whichfish[w]] <- sum(dista[n:(s*30),whichfish[w]],
                                         na.rm = TRUE)
   }
+  n = n + 30
 }
 
 #making rollfinal the same length as finalframe
