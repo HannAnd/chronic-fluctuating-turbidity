@@ -28,12 +28,14 @@ experiment currently being analyzed.
 knitr::opts_chunk$set(echo = TRUE)
 
 #setting the working directory
-knitr::opts_knit$set(root.dir = "D://2 Day Mini Kaolin Turb Flux Experiment/datafiles_processed")
+knitr::opts_knit$set(root.dir = "E://2 Week Kaolin Turb Flux Experiment/datafiles_processed")
 library(tidyverse)
 library(data.table)
 library(zoo)
 #the number of fish per group
-fish = 4
+fish = 3
+#creating column names for each fish in the group
+whichfish <- paste0("fish", 1:fish)
 ```
 
 Setting up the code to be able to read in all of the files from a given
@@ -113,6 +115,11 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   dfNA <- data.frame(frame = 0:maxframe, fish_detected = NA, angle = NA,
                      X = NA, Y = NA)
   
+  #creating a empty dataframes to hold the movement data from a single shoal
+  shoalspeed <- data.frame(matrix(nrow = floor((maxframe+1)/30), ncol = fish))
+  colnames(shoalspeed) <- c(whichfish)
+  shoalaccel <- shoalspeed
+  
   for (z in 1:fish) {  #across one video of files
     
     #finding the frame the fish datafile starts on
@@ -179,8 +186,11 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
       #change in time is 1 second, so no need to divide
       rollspeed$acceleration[a+1] <- rollspeed$speed[a+1] - rollspeed$speed[a]
     }
+    
+    shoalspeed[,z] <- rollspeed$speed
+    shoalaccel[,z] <- rollspeed$acceleration
   
-  }
+  } #for z
   #taking the file name of the currently iterated file and splitting the name
   #into the three sections divided by "_". The first and the third sections of
   #each filename are the tank ID and the recording number, respectively
@@ -190,15 +200,21 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   #on the master dataframe
   finalframe$tankID[k] <- str_hold[[1]][1]
   finalframe$recording[k] <- str_hold[[1]][2]
-  finalframe$mean_speed[k] <- mean(rollspeed$speed, na.rm = TRUE)
-  finalframe$activity_ratio[k] <- (sum(rollspeed$speed >= 10, na.rm = TRUE)/
-                                    sum(rollspeed < 10, na.rm = TRUE)) #these are place-holder values
-  finalframe$speed_variance[k] <- var(rollspeed$speed, na.rm = TRUE)
-  finalframe$max_speed[k] <- max(rollspeed$speed, na.rm = TRUE)
-  finalframe$max_acceleration[k] <- max(rollspeed$acceleration, na.rm = TRUE)
+  finalframe$mean_speed[k] <- mean(unlist(shoalspeed, use.names = FALSE),
+                                   na.rm = TRUE)
+  finalframe$activity_ratio[k] <- (sum(unlist(shoalspeed, use.names = FALSE) >= 10,
+                                       na.rm = TRUE)/
+                                    sum(unlist(shoalspeed, use.names = FALSE) < 10,
+                                        na.rm = TRUE)) #these are place-holder values
+  finalframe$speed_variance[k] <- var(unlist(shoalspeed, use.names = FALSE),
+                                      na.rm = TRUE)
+  finalframe$max_speed[k] <- max(unlist(shoalspeed, use.names = FALSE),
+                                 na.rm = TRUE)
+  finalframe$max_acceleration[k] <- max(unlist(shoalaccel, use.names = FALSE),
+                                        na.rm = TRUE)
   
   i = i+fish
 }
 
-write_csv(finalframe, "D://2 Day Mini Kaolin Turb Flux Experiment/2day_clay_movement_data.csv")
+write_csv(finalframe, "E://2 Week Kaolin Turb Flux Experiment/2week_clay_movement_data.csv")
 ```
