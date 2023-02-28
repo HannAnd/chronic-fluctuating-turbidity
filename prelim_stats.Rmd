@@ -1,0 +1,180 @@
+---
+title: "Cleaned Up Prelim Stats"
+author: "Hannah Anderson"
+date: "2023-02-27"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+setwd("C://Users/hande/Documents/R/fluctuating-turbidity")
+library(tidyverse)
+library(glmmTMB)
+library(emmeans)
+library(car)
+
+#importing the data
+chronic.clay <- read_csv("2week_clay_social_data.csv")
+acute.clay <- read_csv("2day_clay_social_data.csv")
+#dye.stir <- read_csv("dye_stirring_social_data.csv")
+#dye.nostir <- read_csv("dye_nostirring_social_data.csv")
+
+#subsetting the data by the visibility conditions in the flux condition
+#high visibility
+high.chronic <- chronic.clay %>%
+                filter(recording == "rec3" | recording == "rec4" |
+                       recording == "rec7" | recording == "rec9")
+#the two week experiment included unisex groups, so subsetting by sex as well
+high.acute <- acute.clay %>%
+              filter(recording == "rec2" | recording == "rec4")
+#high.stir <- filter(dye.stir, recording == c("rec2", "rec4"))
+#high.nostir <- filter(dye.nostir, recording == c("rec2", "rec4"))
+#low visibility
+low.chronic <- chronic.clay %>%
+               filter(recording == "rec1" | recording == "rec2" |
+                      recording == "rec5" | recording == "rec8")
+low.acute <- acute.clay %>%
+             filter(recording == "rec1" | recording == "rec3")
+#low.stir <- filter(dye.stir, recording == c("rec1", "rec3"))
+#low.nostir <- filter(dye.nostir, recording == c("rec1", "rec3"))
+```
+
+## Analyses for Experiment 1: Chronic (Two Week) Clay Exposure
+
+```{r chronic clay}
+#models including all recordings
+chron.shoal <- glmmTMB(shoal_area ~ treatment*sex + (1|tankID),
+                       data = chronic.clay, family = gaussian())
+chron.neigh <- glmmTMB(mean_neighbor ~ treatment*sex + (1|tankID),
+                       data = chronic.clay, family = gaussian())
+chron.pol <- glmmTMB(polarity ~ treatment*sex + (1|tankID),
+                       data = chronic.clay, family = gaussian())
+
+#models including only recordings where the flux condition visibility was high
+chron.shoal.high <- glmmTMB(shoal_area ~ treatment*sex + (1|tankID),
+                       data = high.chronic, family = gaussian())
+chron.neigh.high <- glmmTMB(mean_neighbor ~ treatment*sex + (1|tankID),
+                       data = high.chronic, family = gaussian())
+chron.pol.high <- glmmTMB(polarity ~ treatment*sex + (1|tankID),
+                       data = high.chronic, family = gaussian())
+
+#models including only recordings where the flux condition visibility was low
+chron.shoal.low <- glmmTMB(shoal_area ~ treatment*sex + (1|tankID),
+                       data = low.chronic, family = gaussian())
+chron.neigh.low <- glmmTMB(mean_neighbor ~ treatment*sex + (1|tankID),
+                       data = low.chronic, family = gaussian())
+chron.pol.low <- glmmTMB(polarity ~ treatment*sex + (1|tankID),
+                       data = low.chronic, family = gaussian())
+
+
+##checking for model assumptions
+#models with all recordings
+plot(qqnorm(residuals(chron.neigh)),
+     main = "QQ-Plot of Chronic Two Week Clay Experiment",
+     sub = "Mean Neighbor Distances, All Recordings",
+     xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+qqline(residuals(chron.neigh), col = "red")
+shapiro.test(residuals(chron.neigh))
+leveneTest(mean_neighbor ~ treatment*sex, data = chronic.clay)
+
+plot(qqnorm(residuals(chron.shoal)),
+     main = "QQ-Plot of Chronic Two Week Clay Experiment",
+     sub = "Mean Shoal Areas, All Recordings",
+     xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+qqline(residuals(chron.shoal), col = "red")
+shapiro.test(residuals(chron.shoal))
+leveneTest(shoal_area ~ treatment*sex, data = chronic.clay)
+
+plot(qqnorm(residuals(chron.pol)),
+     main = "QQ-Plot of Chronic Two Week Clay Experiment",
+     sub = "Mean Polarity, All Recordings",
+     xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+qqline(residuals(chron.pol), col = "red")
+shapiro.test(residuals(chron.pol))
+leveneTest(polarity ~ treatment*sex, data = chronic.clay)
+
+#models with only high visibility flux recordings
+plot(qqnorm(residuals(chron.neigh.high)),
+     main = "QQ-Plot of Chronic Two Week Clay Experiment",
+     sub = "Mean Neighbor Distances, High Visibility in Flux",
+     xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+qqline(residuals(chron.neigh.high), col = "red")
+shapiro.test(residuals(chron.neigh.high))
+leveneTest(mean_neighbor ~ treatment*sex, data = high.chronic)
+
+plot(qqnorm(residuals(chron.shoal.high)),
+     main = "QQ-Plot of Chronic Two Week Clay Experiment",
+     sub = "Mean Shoal Areas, High Visibility in Flux",
+     xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+qqline(residuals(chron.shoal.high), col = "red")
+shapiro.test(residuals(chron.shoal.high))
+leveneTest(shoal_area ~ treatment*sex, data = high.chronic)
+
+plot(qqnorm(residuals(chron.pol.high)),
+     main = "QQ-Plot of Chronic Two Week Clay Experiment",
+     sub = "Mean Polarity, High Visibility in Flux",
+     xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+qqline(residuals(chron.pol.high), col = "red")
+shapiro.test(residuals(chron.pol.high))
+leveneTest(polarity ~ treatment*sex, data = high.chronic)
+
+#models with only low visibility flux recordings
+plot(qqnorm(residuals(chron.neigh.low)),
+     main = "QQ-Plot of Chronic Two Week Clay Experiment",
+     sub = "Mean Neighbor Distances, Low Visibility in Flux",
+     xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+qqline(residuals(chron.neigh.low), col = "red")
+shapiro.test(residuals(chron.neigh.low))
+leveneTest(mean_neighbor ~ treatment*sex, data = low.chronic)
+
+plot(qqnorm(residuals(chron.shoal.low)),
+     main = "QQ-Plot of Chronic Two Week Clay Experiment",
+     sub = "Mean Shoal Areas, Low Visibility in Flux",
+     xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+qqline(residuals(chron.shoal.low), col = "red")
+shapiro.test(residuals(chron.shoal.low))
+leveneTest(shoal_area ~ treatment*sex, data = low.chronic)
+
+plot(qqnorm(residuals(chron.pol.low)),
+     main = "QQ-Plot of Chronic Two Week Clay Experiment",
+     sub = "Mean Polarity, High Visibility in Flux",
+     xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+qqline(residuals(chron.pol.high), col = "red")
+shapiro.test(residuals(chron.pol.high))
+leveneTest(polarity ~ treatment*sex, data = high.chronic)
+```
+
+## Analyses for Experiment 2: Acute (Two Week) Clay Exposure
+
+```{r acute clay}
+#models including all recordings
+acute.shoal <- glmmTMB(shoal_area ~ treatment + (1|tankID),
+                       data = acute.clay, family = gaussian())
+acute.neigh <- glmmTMB(mean_neighbor ~ treatment + (1|tankID),
+                       data = acute.clay, family = gaussian())
+acute.pol <- glmmTMB(polarity ~ treatment + (1|tankID),
+                       data = acute.clay, family = gaussian())
+#doing a pairwise comparison of the model with significant results
+pairs(emmeans(acute.pol, "treatment"))
+
+
+#models including only recordings where the flux condition visibility was high
+acute.shoal.high <- glmmTMB(shoal_area ~ treatment + (1|tankID),
+                       data = high.acute, family = gaussian())
+acute.neigh.high <- glmmTMB(mean_neighbor ~ treatment + (1|tankID),
+                       data = high.acute, family = gaussian())
+acute.pol.high <- glmmTMB(polarity ~ treatment + (1|tankID),
+                       data = high.acute, family = gaussian())
+
+#models including only recordings where the flux condition visibility was low
+acute.shoal.low <- glmmTMB(shoal_area ~ treatment + (1|tankID),
+                       data = low.acute, family = gaussian())
+acute.neigh.low <- glmmTMB(mean_neighbor ~ treatment + (1|tankID),
+                       data = low.acute, family = gaussian())
+acute.pol.low <- glmmTMB(polarity ~ treatment + (1|tankID),
+                       data = low.acute, family = gaussian())
+pairs(emmeans(acute.pol.low, "treatment"))
+```
