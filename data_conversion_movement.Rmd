@@ -28,12 +28,12 @@ experiment currently being analyzed.
 knitr::opts_chunk$set(echo = TRUE)
 
 #setting the working directory
-knitr::opts_knit$set(root.dir = "E://2 Week Kaolin Turb Flux Experiment/datafiles_processed")
+knitr::opts_knit$set(root.dir = "E://2 Day Mini Kaolin Turb Flux Experiment/datafiles_processed")
 library(tidyverse)
 library(data.table)
 library(zoo)
 #the number of fish per group
-fish = 3
+fish = 4
 #creating column names for each fish in the group
 whichfish <- paste0("fish", 1:fish)
 ```
@@ -216,5 +216,5 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   i = i+fish
 }
 
-write_csv(finalframe, "E://2 Week Kaolin Turb Flux Experiment/2week_clay_movement_data.csv")
+write_csv(finalframe, "E://2 Day Mini Kaolin Turb Flux Experiment/2day_clay_movement_data.csv")
 ```
