@@ -1,0 +1,1403 @@
+---
+title: "Aggression and Affiliation Plots"
+author: "Hannah Anderson"
+date: "2023-04-13"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("C://Users/hande/Documents/R/fluctuating-turbidity")
+library(tidyverse)
+library(ggplot2)
+library(gridExtra)
+
+chron_clay <- read_csv("chronic_clay_BORIS_all.csv")
+acute_clay <- read_csv("acute_clay_BORIS_all.csv")
+stir_dye <- read_csv("stir_dye_BORIS_all.csv")
+nostir_dye <- read_csv("nostir_dye_BORIS_all.csv")
+```
+
+
+## Chronic Turbidity Plots
+
+```{r two week clay, echo=FALSE}
+#histograms
+hist.chase <- chron_clay %>%
+              filter(behavior == "chasing") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Two Week Clay Experiment: Chase Counts") + 
+              xlab("Total Number of Chases") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+hist.lat <- chron_clay %>%
+              filter(behavior == "lat_display") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Two Week Clay Experiment: Lateral Display Counts") + 
+              xlab("Total Number of Lateral Displays") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+hist.cont <- chron_clay %>%
+              filter(behavior == "agg_contact") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Two Week Clay Experiment: Aggressive Contact Counts") + 
+              xlab("Total Number of Aggressive Contacts") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+hist.foll <- chron_clay %>%
+              filter(behavior == "following") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Two Week Clay Experiment: Following Counts") + 
+              xlab("Total Number of Follows") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+#box plots
+box.count <- chron_clay %>%
+  mutate(behavior = fct_relevel(behavior, "chasing", "lat_display",
+                                          "agg_contact", "following")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = behavior, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Behavior Counts",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Counts of Behaviors per Recording") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  ylim(0,215) +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+        plot.subtitle = element_text(size = 14),
+        axis.title = element_text(size = 14, face = "bold"),
+        axis.text = element_text(size = 13),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 13),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(),
+        plot.margin = margin(12, 12, 12, 12))
+
+box.count.sex <- chron_clay %>%
+  mutate(behavior = fct_relevel(behavior, "chasing", "lat_display",
+                                          "agg_contact", "following")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = behavior, y = behav_count, fill = interaction(sex, treatment,
+                                                               sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Behavior Counts",
+       subtitle = "Across All Recordings", fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Counts of Behaviors per Recording") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  ylim(0,215) +
+  theme_classic()
+
+box.dura <- chron_clay %>%
+  filter(behavior %in% c("chasing", "lat_display", "following")) %>%
+  mutate(behavior = fct_relevel(behavior, "chasing", "lat_display",
+                                          "following")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = behavior, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Behavior Durations",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Mean Time Spent Performing Behavior (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  ylim(0,11.3) +
+  theme_classic()
+
+box.dura.sex <- chron_clay %>%
+  filter(behavior %in% c("chasing", "lat_display", "following")) %>%
+  mutate(behavior = fct_relevel(behavior, "chasing", "lat_display",
+                                          "following")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = behavior, y = duration_s, fill = interaction(sex, treatment,
+                                                              sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Behavior Durations",
+       subtitle = "Across All Recordings", fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Mean Time Spent Performing Behavior (s)") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  ylim(0,11.3) +
+  theme_classic()
+
+box.count.chase <- chron_clay %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = interaction(sex, treatment,
+                                                              sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Number of Chases",
+       subtitle = "Across All Recordings", fill = "Sex:Treatment") +
+  xlab("Treatments") + ylab("Total Number of Chases") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.count.lat <- chron_clay %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = interaction(sex, treatment,
+                                                              sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Number of Lateral Displays",
+       subtitle = "Across All Recordings", fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Total Number of Lateral Displays") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.count.cont <- chron_clay %>%
+  filter(behavior == "agg_contact") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = interaction(sex, treatment,
+                                                              sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Number of Aggressive Contacts",
+       subtitle = "Across All Recordings", fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Total Number of Aggressive Contacts") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.count.foll <- chron_clay %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = interaction(sex, treatment,
+                                                              sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Number of Follows",
+       subtitle = "Across All Recordings", fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Total Number of Follows") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+
+box.dura.chase <- chron_clay %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = interaction(sex, treatment,
+                                                               sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Duration of Chases",
+       subtitle = "Across All Recordings", fill = "Sex:Treatment") +
+  xlab("Treatments") + ylab("Mean Duration of Chases (s)") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.dura.lat <- chron_clay %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = interaction(sex, treatment,
+                                                               sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Duration of Lateral Displays",
+       subtitle = "Across All Recordings", fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Mean Duration of Lateral Displays (s)") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.dura.foll <- chron_clay %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = interaction(sex, treatment,
+                                                               sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Duration of Follows",
+       subtitle = "Across All Recordings", fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Mean Duration of Follows (s)") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+
+#plots of high visibility fluctuations only
+box.count.chase.hi <- chron_clay %>%
+  filter(recording %in% c(3, 4, 7, 9)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = interaction(sex, treatment,
+                                                              sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Number of Chases",
+       subtitle = "When Visibility is High in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Treatments") + ylab("Total Number of Chases") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.count.lat.hi <- chron_clay %>%
+  filter(recording %in% c(3, 4, 7, 9)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = interaction(sex, treatment,
+                                                              sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Number of Lateral Displays",
+       subtitle = "When Visibility is High in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Total Number of Lateral Displays") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.count.cont.hi <- chron_clay %>%
+  filter(recording %in% c(3, 4, 7, 9)) %>%
+  filter(behavior == "agg_contact") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = interaction(sex, treatment,
+                                                              sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Number of Aggressive Contacts",
+       subtitle = "When Visibility is High in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Total Number of Aggressive Contacts") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.count.foll.hi <- chron_clay %>%
+  filter(recording %in% c(3, 4, 7, 9)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = interaction(sex, treatment,
+                                                              sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Number of Follows",
+       subtitle = "When Visibility is High in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Total Number of Follows") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+
+box.dura.chase.hi <- chron_clay %>%
+  filter(recording %in% c(3, 4, 7, 9)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = interaction(sex, treatment,
+                                                               sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Duration of Chases",
+       subtitle = "When Visibility is High in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Treatments") + ylab("Mean Duration of Chases (s)") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.dura.lat.hi <- chron_clay %>%
+  filter(recording %in% c(3, 4, 7, 9)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = interaction(sex, treatment,
+                                                               sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Duration of Lateral Displays",
+       subtitle = "When the Visbility is High in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Mean Duration of Lateral Displays (s)") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.dura.foll.hi <- chron_clay %>%
+  filter(recording %in% c(3, 4, 7, 9)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = interaction(sex, treatment,
+                                                               sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Duration of Follows",
+       subtitle = "When the Visibility is High in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Mean Duration of Follows (s)") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+
+#plots of low visibility fluctuations only
+box.count.chase.low <- chron_clay %>%
+  filter(recording %in% c(1, 2, 5, 8)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = interaction(sex, treatment,
+                                                              sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Number of Chases",
+       subtitle = "When Visibility is Low in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Treatments") + ylab("Total Number of Chases") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.count.lat.low <- chron_clay %>%
+  filter(recording %in% c(1, 2, 5, 8)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = interaction(sex, treatment,
+                                                              sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Number of Lateral Displays",
+       subtitle = "When Visibility is Low in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Total Number of Lateral Displays") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.count.cont.low <- chron_clay %>%
+  filter(recording %in% c(1, 2, 5, 8)) %>%
+  filter(behavior == "agg_contact") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = interaction(sex, treatment,
+                                                              sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Number of Aggressive Contacts",
+       subtitle = "When Visibility is Low in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Total Number of Aggressive Contacts") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.count.foll.low <- chron_clay %>%
+  filter(recording %in% c(1, 2, 5, 8)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = interaction(sex, treatment,
+                                                              sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Number of Follows",
+       subtitle = "When Visibility is Low in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Total Number of Follows") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+
+box.dura.chase.low <- chron_clay %>%
+  filter(recording %in% c(1, 2, 5, 8)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = interaction(sex, treatment,
+                                                               sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Duration of Chases",
+       subtitle = "When Visibility is Low in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Treatments") + ylab("Mean Duration of Chases (s)") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.dura.lat.low <- chron_clay %>%
+  filter(recording %in% c(1, 2, 5, 8)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = interaction(sex, treatment,
+                                                               sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Duration of Lateral Displays",
+       subtitle = "When the Visbility is Low in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Mean Duration of Lateral Displays (s)") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+
+box.dura.foll.low <- chron_clay %>%
+  filter(recording %in% c(1, 2, 5, 8)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = interaction(sex, treatment,
+                                                               sep = ":"))) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Duration of Follows",
+       subtitle = "When the Visibility is High in the Flux Condition",
+       fill = "Sex:Treatment") +
+  xlab("Behaviors") + ylab("Mean Duration of Follows (s)") +
+  scale_fill_manual(values = c("mistyrose", "lightskyblue1", "lightpink",
+                               "lightskyblue3", "pink3", "lightskyblue4")) +
+  theme_classic()
+```
+
+
+## Acute Turbidity Plots
+
+```{r two day clay, echo=FALSE}
+#histograms
+hist.chase <- acute_clay %>%
+              filter(behavior == "chasing") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Two Day Clay Experiment: Chase Counts") + 
+              xlab("Total Number of Chases") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+hist.lat <- acute_clay %>%
+              filter(behavior == "lat_display") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Two Day Clay Experiment: Lateral Display Counts") + 
+              xlab("Total Number of Lateral Displays") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+hist.cont <- acute_clay %>%
+              filter(behavior == "agg_contact") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Two Day Clay Experiment: Aggressive Contact Counts") + 
+              xlab("Total Number of Aggressive Contacts") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+hist.foll <- acute_clay %>%
+              filter(behavior == "following") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Two Day Clay Experiment: Following Counts") + 
+              xlab("Total Number of Follows") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+box.count <- acute_clay %>%
+  mutate(behavior = fct_relevel(behavior, "chasing", "lat_display",
+                                          "agg_contact", "following")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = behavior, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Behavior Counts",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Counts of Behaviors per Recording") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  ylim(0, 215) +
+  theme_classic()
+
+box.dura <- acute_clay %>%
+  filter(behavior %in% c("chasing", "lat_display", "following")) %>%
+  mutate(behavior = fct_relevel(behavior, "chasing", "lat_display",
+                                          "following")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = behavior, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Behavior Durations",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Mean Time Spent Performing Behavior (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  ylim(0,11.3) +
+  theme_classic()
+
+
+box.count.chase <- acute_clay %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Number of Chases",
+       subtitle = "Across All Recordings") +
+  xlab("Treatments") + ylab("Total Number of Chases") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.count.lat <- acute_clay %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Number of Lateral Displays",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Total Number of Lateral Displays") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.count.cont <- acute_clay %>%
+  filter(behavior == "agg_contact") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Number of Aggressive Contacts",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Total Number of Aggressive Contacts") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.count.foll <- acute_clay %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Number of Follows",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Total Number of Follows") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+
+box.dura.chase <- acute_clay %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Duration of Chases",
+       subtitle = "Across All Recordings") +
+  xlab("Treatments") + ylab("Mean Duration of Chases (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.dura.lat <- acute_clay %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Duration of Lateral Displays",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Mean Duration of Lateral Displays (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.dura.foll <- acute_clay %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Week Clay Experiment: Duration of Follows",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Mean Duration of Follows (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+
+#plots of high visibility fluctuations only
+box.count.chase.hi <- acute_clay %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Number of Chases",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Treatments") + ylab("Total Number of Chases") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.count.lat.hi <- acute_clay %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Number of Lateral Displays",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Lateral Displays") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.count.cont.hi <- acute_clay %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "agg_contact") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Number of Aggressive Contacts",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Aggressive Contacts") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.count.foll.hi <- acute_clay %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Number of Follows",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Follows") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+
+box.dura.chase.hi <- acute_clay %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Duration of Chases",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Treatments") + ylab("Mean Duration of Chases (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.dura.lat.hi <- acute_clay %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Duration of Lateral Displays",
+       subtitle = "When the Visbility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Mean Duration of Lateral Displays (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.dura.foll.hi <- acute_clay %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Duration of Follows",
+       subtitle = "When the Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Mean Duration of Follows (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+
+#plots of low visibility fluctuations only
+box.count.chase.low <- acute_clay %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Number of Chases",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Treatments") + ylab("Total Number of Chases") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.count.lat.low <- acute_clay %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Number of Lateral Displays",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Lateral Displays") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.count.cont.low <- acute_clay %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "agg_contact") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Number of Aggressive Contacts",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Aggressive Contacts") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.count.foll.low <- acute_clay %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Number of Follows",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Follows") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+
+box.dura.chase.low <- acute_clay %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Duration of Chases",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Treatments") + ylab("Mean Duration of Chases (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.dura.lat.low <- acute_clay %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Duration of Lateral Displays",
+       subtitle = "When the Visbility is Low in the Flux Condition") +
+  xlab("Behaviors") + ylab("Mean Duration of Lateral Displays (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+box.dura.foll.low <- acute_clay %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Two Day Clay Experiment: Duration of Follows",
+       subtitle = "When the Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Mean Duration of Follows (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+```
+
+
+## Dye with Stirring Plots
+
+```{r dye with stirring, echo=FALSE}
+#histograms
+hist.chase <- stir_dye %>%
+              filter(behavior == "chasing") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Stirred Dye Experiment: Chase Counts") + 
+              xlab("Total Number of Chases") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+hist.lat <- stir_dye %>%
+              filter(behavior == "lat_display") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Stirred Dye Experiment: Lateral Display Counts") + 
+              xlab("Total Number of Lateral Displays") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+hist.cont <- stir_dye %>%
+              filter(behavior == "agg_contact") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Stirred Dye Experiment: Aggressive Contact Counts") + 
+              xlab("Total Number of Aggressive Contacts") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+hist.foll <- stir_dye %>%
+              filter(behavior == "following") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Stirred Dye Experiment: Following Counts") + 
+              xlab("Total Number of Follows") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+box.count <- stir_dye %>%
+  mutate(behavior = fct_relevel(behavior, "chasing", "lat_display",
+                                          "agg_contact", "following")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = behavior, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Dye with Stirring Experiment: Behavior Counts",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Counts of Behaviors per Recording") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  ylim(0, 215) +
+  theme_classic()
+
+box.dura <- stir_dye %>%
+  filter(behavior %in% c("chasing", "lat_display", "following")) %>%
+  mutate(behavior = fct_relevel(behavior, "chasing", "lat_display",
+                                          "following")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = behavior, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Dye with Stirring Experiment: Behavior Durations",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Mean Time Spent Performing Behavior (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  ylim(0,11.3) +
+  theme_classic()
+
+box.count.chase <- stir_dye %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Number of Chases",
+       subtitle = "Across All Recordings") +
+  xlab("Treatments") + ylab("Total Number of Chases") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.lat <- stir_dye %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Number of Lateral Displays",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Total Number of Lateral Displays") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.cont <- stir_dye %>%
+  filter(behavior == "agg_contact") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Number of Aggressive Contacts",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Total Number of Aggressive Contacts") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.foll <- stir_dye %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Number of Follows",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Total Number of Follows") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+
+box.dura.chase <- stir_dye %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Duration of Chases",
+       subtitle = "Across All Recordings") +
+  xlab("Treatments") + ylab("Mean Duration of Chases (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.dura.lat <- stir_dye %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Duration of Lateral Displays",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Mean Duration of Lateral Displays (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.dura.foll <- stir_dye %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Duration of Follows",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Mean Duration of Follows (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+
+#plots of high visibility fluctuations only
+box.count.chase.hi <- stir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Number of Chases",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Treatments") + ylab("Total Number of Chases") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.lat.hi <- stir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Number of Lateral Displays",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Lateral Displays") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.cont.hi <- stir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "agg_contact") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Number of Aggressive Contacts",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Aggressive Contacts") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.foll.hi <- stir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Number of Follows",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Follows") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+
+box.dura.chase.hi <- stir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Duration of Chases",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Treatments") + ylab("Mean Duration of Chases (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.dura.lat.hi <- stir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Duration of Lateral Displays",
+       subtitle = "When the Visbility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Mean Duration of Lateral Displays (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.dura.foll.hi <- stir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Duration of Follows",
+       subtitle = "When the Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Mean Duration of Follows (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+
+#plots of low visibility fluctuations only
+box.count.chase.low <- stir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Number of Chases",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Treatments") + ylab("Total Number of Chases") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.lat.low <- stir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Number of Lateral Displays",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Lateral Displays") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.cont.low <- stir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "agg_contact") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Number of Aggressive Contacts",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Aggressive Contacts") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.foll.low <- stir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Number of Follows",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Follows") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+
+box.dura.chase.low <- stir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Duration of Chases",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Treatments") + ylab("Mean Duration of Chases (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.dura.lat.low <- stir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Duration of Lateral Displays",
+       subtitle = "When the Visbility is Low in the Flux Condition") +
+  xlab("Behaviors") + ylab("Mean Duration of Lateral Displays (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.dura.foll.low <- stir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Stirred Dye Experiment: Duration of Follows",
+       subtitle = "When the Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Mean Duration of Follows (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+```
+
+
+## Dye without Stirring Plots
+
+```{r dye without stirring, echo=FALSE}
+#histograms
+hist.chase <- nostir_dye %>%
+              filter(behavior == "chasing") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Unstirred Dye Experiment: Chase Counts") + 
+              xlab("Total Number of Chases") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+hist.lat <- nostir_dye %>%
+              filter(behavior == "lat_display") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Unstirred Dye Experiment: Lateral Display Counts") + 
+              xlab("Total Number of Lateral Displays") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+hist.cont <- nostir_dye %>%
+              filter(behavior == "agg_contact") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Unstirred Dye Experiment: Aggressive Contact Counts") + 
+              xlab("Total Number of Aggressive Contacts") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+hist.foll <- nostir_dye %>%
+              filter(behavior == "following") %>%
+              ggplot(aes(x = behav_count, fill = treatment)) +
+              geom_histogram(position = "identity", alpha = 0.5) +
+              labs(title = "Unstirred Dye Experiment: Following Counts") + 
+              xlab("Total Number of Follows") +
+              scale_fill_manual(values = c("slategray1", "khaki", "tomato")) +
+              theme_classic()
+
+box.count <- nostir_dye %>%
+  mutate(behavior = fct_relevel(behavior, "chasing", "lat_display",
+                                          "agg_contact", "following")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = behavior, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Dye without Stirring Experiment: Behavior Counts",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Counts of Behaviors per Recording") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  ylim(0, 215) +
+  theme_classic()
+
+box.dura <- nostir_dye %>%
+  filter(behavior %in% c("chasing", "lat_display", "following")) %>%
+  mutate(behavior = fct_relevel(behavior, "chasing", "lat_display",
+                                          "following")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = behavior, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Dye without Stirring Experiment: Behavior Durations",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Mean Time Spent Performing Behavior (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  ylim(0,11.3) +
+  theme_classic()
+
+
+box.count.chase <- nostir_dye %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Number of Chases",
+       subtitle = "Across All Recordings") +
+  xlab("Treatments") + ylab("Total Number of Chases") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.lat <- nostir_dye %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Number of Lateral Displays",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Total Number of Lateral Displays") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.cont <- nostir_dye %>%
+  filter(behavior == "agg_contact") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Number of Aggressive Contacts",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Total Number of Aggressive Contacts") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.foll <- nostir_dye %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Number of Follows",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Total Number of Follows") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+
+box.dura.chase <- nostir_dye %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Duration of Chases",
+       subtitle = "Across All Recordings") +
+  xlab("Treatments") + ylab("Mean Duration of Chases (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.dura.lat <- nostir_dye %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Duration of Lateral Displays",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Mean Duration of Lateral Displays (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.dura.foll <- nostir_dye %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Duration of Follows",
+       subtitle = "Across All Recordings") +
+  xlab("Behaviors") + ylab("Mean Duration of Follows (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+
+#plots of high visibility fluctuations only
+box.count.chase.hi <- nostir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Number of Chases",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Treatments") + ylab("Total Number of Chases") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.lat.hi <- nostir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Number of Lateral Displays",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Lateral Displays") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.cont.hi <- nostir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "agg_contact") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Number of Aggressive Contacts",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Aggressive Contacts") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.foll.hi <- nostir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Number of Follows",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Follows") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+
+box.dura.chase.hi <- nostir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Duration of Chases",
+       subtitle = "When Visibility is High in the Flux Condition") +
+  xlab("Treatments") + ylab("Mean Duration of Chases (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.dura.lat.hi <- nostir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Duration of Lateral Displays",
+       subtitle = "When the Visbility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Mean Duration of Lateral Displays (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.dura.foll.hi <- nostir_dye %>%
+  filter(recording %in% c(2, 4)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Duration of Follows",
+       subtitle = "When the Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Mean Duration of Follows (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+
+#plots of low visibility fluctuations only
+box.count.chase.low <- nostir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Number of Chases",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Treatments") + ylab("Total Number of Chases") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.lat.low <- nostir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Number of Lateral Displays",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Lateral Displays") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.cont.low <- nostir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "agg_contact") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Number of Aggressive Contacts",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Aggressive Contacts") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.count.foll.low <- nostir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = behav_count, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Number of Follows",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Behaviors") + ylab("Total Number of Follows") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+
+box.dura.chase.low <- nostir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "chasing") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Duration of Chases",
+       subtitle = "When Visibility is Low in the Flux Condition") +
+  xlab("Treatments") + ylab("Mean Duration of Chases (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.dura.lat.low <- nostir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "lat_display") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Duration of Lateral Displays",
+       subtitle = "When the Visbility is Low in the Flux Condition") +
+  xlab("Behaviors") + ylab("Mean Duration of Lateral Displays (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+
+box.dura.foll.low <- nostir_dye %>%
+  filter(recording %in% c(1, 3)) %>%
+  filter(behavior == "following") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = treatment, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  labs(title = "Unstirred Dye Experiment: Duration of Follows",
+       subtitle = "When the Visibility is High in the Flux Condition") +
+  xlab("Behaviors") + ylab("Mean Duration of Follows (s)") +
+  scale_fill_manual(values = c("slategray1", "snow3", "snow4")) +
+  theme_classic()
+```
