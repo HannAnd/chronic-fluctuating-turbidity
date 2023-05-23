@@ -69,18 +69,12 @@ nostir_ryan$behavior[nostir_ryan$behavior == "aggressive contact"] <- "agg_conta
 nostir_ryan$behavior[nostir_ryan$behavior == "lateral display"] <- "lat_display"
 
 
-#some students' tank IDs got converted to dates, so converting them back here
+#Isabella's tank IDs got converted to dates, so converting them back here
 datlength <- length(longclay_isabella$tankID)
 for (i in 1:datlength) {
   str_hold <- strsplit(longclay_isabella$tankID[i], split = "/")
   longclay_isabella$tankID[i] <- paste(str_hold[[1]][1], str_hold[[1]][2],
                                        sep = "-")
-}
-datlength <- length(shortclay_sana$tankID)
-for (i in 1:datlength) {
-  str_hold <- strsplit(shortclay_sana$tankID[i], split = "/")
-  shortclay_sana$tankID[i] <- paste(str_hold[[1]][1], str_hold[[1]][2],
-                                    sep = "-")
 }
 
 #combining the files from different scorers for their shared experiments
