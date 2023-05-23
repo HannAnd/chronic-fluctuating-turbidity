@@ -40,7 +40,7 @@ nostir_grace <- dplyr::filter(dye_grace, grepl("NO", `Media file`))
 longclay_isabella <- longclay_isabella[,c(6:9,12)]
 longclay_izma <- longclay_izma[,c(7:8,11,14,17)]
 shortclay_grace <- shortclay_grace[,c(7:8,10,13,16)]
-shortclay_sana <- shortclay_sana[,c(7:8,10,13,16)]
+shortclay_sana <- shortclay_sana[,c(7:8,11,13,17)]
 dyestir_ryan <- dyestir_ryan[,c(7:8,11,14,17)]
 dyestir_grace <- dyestir_grace[,c(7:8,10,13,16)]
 nostir_ryan <- nostir_ryan[,c(7:8,11,14,17)]
