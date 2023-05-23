@@ -234,7 +234,7 @@ for (i in 2:4) {
 }
 #identifying that these values include all aggressive behaviors
 for (i in 1:4) {
-  temp_data[[i]]$behavior <- "all_agg"
+  temp_data[[i]]$behavior <- "all_aggressive"
 }
 #moving the data out of the temporary list
 behav_agg <- temp_data
@@ -259,7 +259,7 @@ for (i in 2:4) {
 }
 #identifying that these values include all aggressive behaviors
 for (i in 1:4) {
-  temp_data[[i]]$behavior <- "all_agg"
+  temp_data[[i]]$behavior <- "all_aggressive"
 }
 #adding the count data to the duration data for the first experiment
 behav_agg[[1]] <- full_join(behav_agg[[1]], temp_data[[1]], by = c("tankID",
