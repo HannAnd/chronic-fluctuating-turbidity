@@ -28,12 +28,12 @@ experiment currently being analyzed.
 knitr::opts_chunk$set(echo = TRUE)
 
 #setting the working directory
-knitr::opts_knit$set(root.dir = "E://2 Day Mini Kaolin Turb Flux Experiment/datafiles_processed")
+knitr::opts_knit$set(root.dir = "D://2 Week Kaolin Turb Flux Experiment/test")
 library(tidyverse)
 library(data.table)
 library(zoo)
 #the number of fish per group
-fish = 4
+fish = 3
 #creating column names for each fish in the group
 whichfish <- paste0("fish", 1:fish)
 ```
@@ -91,12 +91,11 @@ lumping all fish behaviors across a group because individual identification is
 impossible.
 
 In this file we are extracting movement data. We do this by first processing the
-X,Y coordinates of each fish into distances moved between frames, and from there
-we calculate speed and then acceleration. To correct for noise in the tracking
-process speed is calculated using a rolling average, with acceleration
-calculated from the corrected speed values.
+X,Y coordinates of each fish into distances moved between frames. From the
+distance values we then calculate for each video 1) total distance moved,
+2) speed, 3) ratio of time spent active vs inactive and 4) acceleration.
 
-Once speed and acceleration have been calculated for each individual fish file
+Once these values have been calculated for each individual fish file
 they are combined and summarized into a master datafile containing information
 from all fish videos.
 
@@ -119,6 +118,7 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   shoalspeed <- data.frame(matrix(nrow = floor((maxframe+1)/30), ncol = fish))
   colnames(shoalspeed) <- c(whichfish)
   shoalaccel <- shoalspeed
+  shoaldist <- shoalspeed
   
   for (z in 1:fish) {  #across one video of files
     
@@ -157,19 +157,20 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
     dista$distance_cm <- unlist(dista$distance_cm)
     
     #calculating the base speed of the fish each second with no correcting
-    simpspeed <- data.frame(matrix(nrow = floor(nrow(dista)/30), ncol = 2))
-    colnames(simpspeed) <- c("time", "speed")
+    simpspeed <- data.frame(matrix(nrow = floor(nrow(dista)/30), ncol = 3))
+    colnames(simpspeed) <- c("time", "speed", "activity")
     simpspeed$time <- 1:(floor(nrow(dista)/30))
     #videos are ~30 frames per second (29.7 frames), using floor() to round down
     #to the nearest whole second
     n = 1
     for (s in 1:(floor(nrow(dista)/30))) {  #within one fish's file
       simpspeed$speed[s] <- sum(dista$distance_cm[n:(s*30)], na.rm = TRUE)
+      #if (simpspeed$speed[s] )
       n = n + 30
     }
   
     #correcting for noise in fish detection by calculating a rolling average speed
-    rollspeed <- data.frame(matrix(nrow = nrow(simpspeed), ncol = 3))
+    rollspeed <- data.frame(matrix(nrow = nrow(simpspeed), ncol = 4))
     colnames(rollspeed) <- c("time", "speed", "acceleration")
     rollspeed$time <- simpspeed$time
     #using the rollapply() function from the package "zoo"
@@ -179,9 +180,8 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
       #window
     rollspeed$speed <- rollapply(simpspeed$speed, width = 7, FUN = function(x)
                                  mean(x, na.rm = TRUE), partial = TRUE, fill = NA)
-      #this window value is arbitrary, might be worth piloting to figure out a
-      #better one
     
+    #calculating acceleration
     for (a in 1:((nrow(rollspeed))-1)) {
       #change in time is 1 second, so no need to divide
       rollspeed$acceleration[a+1] <- rollspeed$speed[a+1] - rollspeed$speed[a]
@@ -189,6 +189,40 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
     
     shoalspeed[,z] <- rollspeed$speed
     shoalaccel[,z] <- rollspeed$acceleration
+    
+    #calculating the ratio of time fish spent active vs inactive by converting
+    #all speeds less than or equal to 1.5 to the value "still" and all speeds
+    #above 1.5 to the value "active"
+    for (a in 1:(nrow(simpspeed))) {
+      if (simpspeed$speed[a] <= 1.5) {
+        simpspeed$activity[a] <- "still"
+      } else if (simpspeed$speed[a] > 1.5) {
+        simpspeed$activity[a] <- "active"
+      } else {
+        simpspeed$activity[a] <- "NA"
+      }
+    }
+    
+    #I can't correct for noise using a rolling average with a binary variable,
+    #so here I'm correcting for noise over the same seven second window as in
+    #my rolling averages by labeling each seven second window either "still" or
+    #"active" based on which has the majority in that window
+    rollactive <- data.frame(matrix(nrow = floor((nrow(simpspeed)/7)),
+                                    ncol = 2))
+    colnames(rollactive) <- c("time", "activity")
+    rollactive$time <- seq(from = 7, to = (nrow(rollactive)*7), by = 7)
+    window = 1
+    for (a in 1:(nrow(rollactive))) {
+      temp <- table(simpspeed$activity[window:(window+6)])
+      if (names(which.max(temp)) == "still") {
+        rollactive$activity[a] <- "still"
+      } else if (names(which.max(temp)) == "active") {
+        rollactive$activity[a] <- "active"
+      } else {
+        rollactive$activity[a] <- "NA"
+      }
+      window = window + 7
+    }
   
   } #for z
   #taking the file name of the currently iterated file and splitting the name
@@ -200,17 +234,20 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   #on the master dataframe
   finalframe$tankID[k] <- str_hold[[1]][1]
   finalframe$recording[k] <- str_hold[[1]][2]
+  #due to the way speed was calculated, adding all the speeds together also
+  #gives the total distance moved
+  finalframe$distance_cm[k] <- sum(unlist(shoalspeed, use.names = FALSE),
+                                   na.rm = TRUE)
   finalframe$mean_speed[k] <- mean(unlist(shoalspeed, use.names = FALSE),
                                    na.rm = TRUE)
-  finalframe$activity_ratio[k] <- (sum(unlist(shoalspeed, use.names = FALSE) >= 10,
-                                       na.rm = TRUE)/
-                                    sum(unlist(shoalspeed, use.names = FALSE) < 10,
-                                        na.rm = TRUE)) #these are place-holder values
+  #ratio of active to inactive windows
+  finalframe$activity_ratio[k] <- (length(which(rollactive$activity == "active")))/
+                                  (length(which(rollactive$activity == "still")))
   finalframe$speed_variance[k] <- var(unlist(shoalspeed, use.names = FALSE),
                                       na.rm = TRUE)
   finalframe$max_speed[k] <- max(unlist(shoalspeed, use.names = FALSE),
                                  na.rm = TRUE)
-  finalframe$max_acceleration[k] <- max(unlist(shoalaccel, use.names = FALSE),
+  finalframe$max_acceleration[k] <- max(abs(unlist(shoalaccel, use.names = FALSE)),
                                         na.rm = TRUE)
   
   i = i+fish
