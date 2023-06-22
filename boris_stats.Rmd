@@ -115,6 +115,12 @@ chron_cont_log$behav_count <- log(chron_cont_log$behav_count+1)
 chron_foll_log <- as.data.frame(chronic_list[[4]])
 chron_foll_log$behav_count <- log(chron_foll_log$behav_count+1)
 
+#the tricky transformation
+test <- as.data.frame(chronic_list[[2]])
+test$behav_count <- sqrt(test$behav_count+1)
+test_mod <- update(chronic_lat_c, . ~ ., data = test)
+plot(simulateResiduals(fittedModel = test_mod))
+
 #the transformed models
 chrolog_chase_c <- update(chronic_chase_c, . ~ ., data = chron_chase_log)
 chrolog_lat_c <- update(chronic_lat_c, . ~ ., data = chron_lat_log)
