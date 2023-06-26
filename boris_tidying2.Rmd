@@ -23,6 +23,8 @@ shortclay_sana <- read_csv("acute_clay_BORIS_Sana.csv")
 dyestir_ryan <- read_csv("stir_dye_BORIS_Ryan_HMAedited.csv")
 dye_grace <- read_csv("dye_BORIS_Grace.csv") #includes both dye experiments
 nostir_ryan <- read_csv("nostir_dye_BORIS_Ryan_HMAedited.csv")
+shortclay_hannah <- read_csv("acute_clay_BORIS_Hannah.csv")
+nostir_addition <- read_csv("stir_dye_missing_Grace.csv")
 
 #a reference to keep track of which item in the list is which, serves no other
 #purpose, applies to all lists in this file
@@ -56,7 +58,7 @@ Fixing any mistakes or inconsistencies in naming, any Excel date conversion
 problems and combining the data from the same experiments together.
 
 ```{r tidying and combining}
-#Grace included two experiments in her dye file, so I'm separating them
+#Grace included two experiments in her original dye file, so I'm separating them
 dyestir_grace <- dplyr::filter(dye_grace, grepl("YES", `Media file`))
 nostir_grace <- dplyr::filter(dye_grace, grepl("NO", `Media file`))
 
@@ -69,6 +71,8 @@ dyestir_ryan <- dyestir_ryan[,c(7:8,11,17)]
 dyestir_grace <- dyestir_grace[,c(7:8,10,16)]
 nostir_ryan <- nostir_ryan[,c(7:8,11,17)]
 nostir_grace <- nostir_grace[,c(7:8,10,16)]
+shortclay_hannah <- shortclay_hannah[,c(7:8,10,16)]
+nostir_addition <- nostir_addition[,c(7:8,10,16)]
 
 #changing column names to be universal for all experiments
 sharecol <- c("tankID", "recording", "behavior", "duration_s")
@@ -80,6 +84,8 @@ colnames(dyestir_grace) <- sharecol
 colnames(dyestir_ryan) <- sharecol
 colnames(nostir_grace) <- sharecol
 colnames(nostir_ryan) <- sharecol
+colnames(shortclay_hannah) <- sharecol
+colnames(nostir_addition) <- sharecol
 
 #Ryan's stirred dye file is missing the tankID and recording number for the
 #tank 7-3, recording 3 video
@@ -91,7 +97,9 @@ dyestir_ryan$behavior[dyestir_ryan$behavior == "agg"] <- "agg_contact"
 nostir_ryan$behavior[nostir_ryan$behavior == "Chasing"] <- "chasing"
 nostir_ryan$behavior[nostir_ryan$behavior == "aggressive contact"] <- "agg_contact"
 nostir_ryan$behavior[nostir_ryan$behavior == "lateral display"] <- "lat_display"
-
+#Grace's additional dye videos also used different behavior names
+nostir_addition$behavior[nostir_addition$behavior == "chase"] <- "chasing"
+nostir_addition$behavior[nostir_addition$behavior == "follow"] <- "following"
 
 #Isabella's tank IDs got converted to dates, so converting them back here
 datlength <- length(longclay_isabella$tankID)
@@ -104,9 +112,9 @@ for (i in 1:datlength) {
 #combining the files from different scorers for their shared experiments
 all_data <- list()
 all_data[[1]] <- rbind(longclay_isabella, longclay_izma)
-all_data[[2]] <- rbind(shortclay_grace, shortclay_sana)
+all_data[[2]] <- rbind(shortclay_grace, shortclay_sana, shortclay_hannah)
 all_data[[3]] <- rbind(dyestir_grace, dyestir_ryan)
-all_data[[4]] <- rbind(nostir_grace, nostir_ryan)
+all_data[[4]] <- rbind(nostir_grace, nostir_ryan, nostir_addition)
 ```
 
 
@@ -227,7 +235,6 @@ for (i in 1:4) {
 #adding a treatment condition column to both the aggregated and unaggregated
 #dataframes
 for (i in 1:4) {
-  #flux treatment
   collapse_data[[i]]$treatment <- collapse_data[[i]]$tankID %>%
                                   fct_collapse(flux = fluxtanks[[i]],
                                                stable = stabletanks[[i]],
