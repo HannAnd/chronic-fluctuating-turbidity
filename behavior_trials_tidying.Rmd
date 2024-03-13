@@ -1,0 +1,117 @@
+---
+title: "Turbidity Behavioral Trials"
+author: "Hannah Anderson"
+date: "2024-02-09"
+output: pdf_document
+---
+
+Description of Orphan Project here?
+
+```{r setup, include=FALSE}
+library(tidyverse)
+
+setwd("C://Users/hande/Documents/R/fluctuating-turbidity")
+emily_data <- read_csv("flux_turb_behav_trials_Emily.csv")
+sana_data <- read_csv("flux_turb_behav_trials_Sana.csv")
+
+#the tank IDs in each treatment
+fluxtanks <- c("tank4-1", "tank5-2", "tank7-2", "tank6-1", "tank6-3", "tank1-3",
+               "tank1-2", "tank2-3")
+stabletanks <- c("tank8-2", "tank3-1", "tank5-3", "tank6-2", "tank1-1",
+                 "tank8-1", "tank7-1", "tank2-2")
+cleartanks <- c("tank8-3", "tank3-2", "tank3-3", "tank4-3", "tank7-3",
+                "tank4-2", "tank5-1", "tank2-1")
+```
+
+
+## Cleaning base data
+
+Fixing any discrepancies between scorers as well as any mistakes or clarity
+problems in the original datasets.
+
+```{r tidying}
+#trimming down the dataframes so they only contain useful columns
+emily_trim <- emily_data[,c(9:10,14,19)]
+sana_trim <- sana_data[,c(9:10,13,18)]
+
+#changing the column names to be more R friendly
+sharecol <- c("tankID", "recording", "behavior", "duration_s")
+colnames(emily_trim) <- sharecol
+colnames(sana_trim) <- sharecol
+
+#making sure the tank IDs are consistent between the two scorers
+sana_trim$tankID <- gsub("_", "-", sana_trim$tankID)
+sana_trim$tankID <- paste0("tank", sana_trim$tankID)
+
+#combining the files from the different scorers
+all_data <- rbind(emily_trim, sana_trim)
+```
+
+
+## Feeding Trial Data Cleaning
+
+```{r feeding}
+#pulling the feeding trial data from the compiled dataset
+feeding <- all_data %>%
+           filter(behavior == "feeding")
+#writing the feeding trial data to .csv
+write_csv(feeding, "flux_turb_feeding_trial.csv")
+```
+
+
+## Shelter Trial Data Cleaning
+
+```{r shelter}
+#pulling the shelter trial data from the compiled dataset
+shelter <- all_data %>%
+           filter(behavior %in% c("shelter_approach", "1_fish_shelter",
+                                  "2_fish_shelter", "3_fish_shelter",
+                                  "4_fish_shelter"))
+
+#summing the duration of time each density of fish spent in the shelter and
+#counting the number of times the fish entered/exited the shelter to cause these
+#densities
+shelter_dura <- shelter %>%
+               filter(behavior != "shelter_approach") %>%
+               group_by(tankID, recording, behavior) %>%
+               summarize(duration_s = sum(duration_s),
+                         enter_exit = as.numeric(table(behavior)))
+
+#creating an additional category that includes the total duration of all time
+#the shelter was occupied by at least one fish and adding up the total number of
+#times fish entered/exited the shelter for each trial
+shelter_all <- shelter_dura %>%
+               group_by(tankID, recording) %>%
+               summarize(duration_s = sum(duration_s),
+                         enter_exit = sum(enter_exit))
+#writing the the total summed data to .csv
+write_csv(shelter_all, "flux_shelter_trial_summed.csv")
+
+#removing the counts for each shelter level of shelter_dura for easier
+#interpretation
+shelter_dura <- shelter_dura[,1:4]
+#writing the leveled shelter duration data to .csv
+write_csv(shelter_dura, "flux_shelter_trial_levels.csv")
+
+#writing the time to approach shelter to .csv
+shelter_app <- shelter %>%
+               filter(behavior == "shelter_approach")
+write_csv(shelter_app, "flux_shelter_trial_approach.csv")
+```
+
+
+## Color Preference Trial
+
+``` {r color}
+#pulling the color preference trial data from the compiled dataset
+color <- all_data %>%
+         filter(behavior %in% c("swim_border_yellow", "swim_over_yellow",
+                                "swim_border_red", "swim_over_red",
+                                "swim_border_purple", "swim_over_purple",
+                                "swim_border_blue", "swim_over_blue"))
+
+#counting the number of times the fish interacted with each color
+color_count <- color %>%
+               group_by(tankID, recording, behavior) %>%
+               summarize(behav_count = as.numeric(table(behavior)))
+```
