@@ -46,38 +46,43 @@ library(tidyverse)
 library(glmmTMB)
 library(emmeans)
 library(car)
-library(lmtest)
 library(DHARMa)
+library(data.table)
 
 #importing the data
-chronic.clay <- read_csv("2week_clay_social_data.csv")
-acute.clay <- read_csv("2day_clay_social_data.csv")
-dye.stir <- read_csv("dye_stir_social_data.csv")
-dye.nostir <- read_csv("dye_nostir_social_data.csv")
+chronic_clay <- read_csv("2week_clay_social_data.csv")
+acute_clay <- read_csv("2day_clay_social_data.csv")
+dye_stir <- read_csv("dye_stir_social_data.csv")
+dye_nostir <- read_csv("dye_nostir_social_data.csv")
 
-#subsetting the data by the visibility conditions in the flux condition
-##high visibility
-high.chronic <- chronic.clay %>%
-                filter(recording %in% c("rec3", "rec4", "rec7", "rec9"))
-high.acute <- acute.clay %>%
-              filter(recording %in% c("rec2", "rec4"))
-high.stir <- dye.stir %>%
-             filter(recording %in% c("rec2", "rec4"))
-high.nostir <- dye.nostir %>%
-               filter(recording %in% c("rec2", "rec4"))
-#low visibility
-low.chronic <- chronic.clay %>%
-               filter(recording %in% c("rec1", "rec2", "rec5", "rec8"))
-low.acute <- acute.clay %>%
-             filter(recording %in% c("rec1", "rec3"))
-low.stir <- dye.stir %>%
-            filter(recording %in% c("rec1", "rec3"))
-low.nostir <- dye.nostir %>%
-              filter(recording %in% c("rec1", "rec3"))
+#changing the tank IDs to shoal IDs to ensure IDs are different between the
+#experiments that get statistically compared
+acute_clay <- acute_clay %>%
+              rename_at("tankID", ~"shoalID")
+acute_clay$shoalID <- gsub("tank", "clay", acute_clay$shoalID)
+dye_stir <- dye_stir %>%
+            rename_at("tankID", ~"shoalID")
+dye_stir$shoalID <- gsub("tank", "dyeStir", dye_stir$shoalID)
+dye_nostir <- dye_nostir %>%
+              rename_at("tankID", ~"shoalID")
+dye_nostir$shoalID <- gsub("tank", "dyeNoStir", dye_nostir$shoalID)
+
+#adding a column to identify experiment
+acute_clay$experiment <- "clay"
+dye_stir$experiment <- "dye_stir"
+dye_nostir$experiment <- "dye_no_stir"
+
+#combining the clay and stirred dye data together in a single data frame for
+#statistical comparison
+clay_dye <- rbind(acute_clay, dye_stir)
+#combining the stirred and unstirred dye data together in a single data frame
+#for statistical comparison
+stir_nostir <- rbind(dye_stir, dye_nostir)
 ```
 
 
 ## Analyses for Experiment 1: Chronic (Two Week) Clay Exposure
+Coming back to this one later
 
 ```{r chronic clay}
 #models including all recordings
@@ -161,174 +166,163 @@ Anova(chron.pol.low)
 ```
 
 
-## Analyses for Experiment 2: Acute (Two Day) Clay Exposure
+## Direct Comparisons
 
-```{r acute clay}
-#models including all recordings
-acute.shoal <- glmmTMB(shoal_area ~ treatment + (1|tankID),
-                       data = acute.clay, family = gaussian())
-acute.neigh <- update(acute.shoal, mean_neighbor ~ .)
-acute.pol <- update(acute.shoal, polarity ~ ., family = beta_family())
+For the direct comparison models we compared the response variables of the compared experiments during the recording on the second day where the flux and stable conditions had the same visibility (recording 4).
+
+The first set of direct comparisons is between the acute (two day) clay experiment and the stirred dye experiment to explore any potential differences between clay- and dye-imparied visibility. The second set of direct comparisons is between the stirred and unstirred dye experiments to determine if there was an effect of stirring on fish response to the treatments.
+
+```{r direct}
+#sub-setting the data to only include recording 4
+direct_claydye <- clay_dye %>%
+                  filter(recording == "rec4")
+direct_dye <- stir_nostir %>%
+              filter(recording == "rec4")
+
+
+#the clay vs dye models
+
+#mean shoal area
+d_claydye_shoal <- lm(shoal_area ~ treatment*experiment, data = direct_claydye)
+#mean neighbor distance
+d_claydye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
+#polarity
+d_claydye_pol <- update(claydye_shoal, polarity ~ .)
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = acute.shoal))
-plot(simulateResiduals(fittedModel = acute.neigh))
-plot(simulateResiduals(fittedModel = acute.pol))
+plot(d_claydye_shoal)
+plot(d_claydye_neigh)
+plot(d_claydye_pol)
 
 #analyzing the models
-Anova(acute.shoal)
-Anova(acute.neigh)
-Anova(acute.pol)
+Anova(d_claydye_shoal)
+Anova(d_claydye_neigh)
+Anova(d_claydye_pol)
 
 
-#models including only recordings where the flux condition visibility was high
-acute.shoal.high <- update(acute.shoal, . ~ ., data = high.acute)
-acute.neigh.high <- update(acute.neigh, . ~ ., data = high.acute)
-acute.pol.high <- update(acute.pol, . ~ ., data = high.acute)
+#the stirred vs unstirred dye models
 
-#checking the model assumptions
-plot(simulateResiduals(fittedModel = acute.shoal.high))
-plot(simulateResiduals(fittedModel = acute.neigh.high))
-plot(simulateResiduals(fittedModel = acute.pol.high))
-
-#analyzing the models
-Anova(acute.shoal.high)
-Anova(acute.neigh.high)
-Anova(acute.pol.high)
-
-
-#models including only recordings where the flux condition visibility was low
-acute.shoal.low <- update(acute.shoal, . ~ ., data = low.acute)
-acute.neigh.low <- update(acute.neigh, . ~ ., data = low.acute)
-acute.pol.low <- update(acute.pol, . ~ ., data = low.acute)
+#mean shoal area
+d_dyedye_shoal <- lm(shoal_area ~ treatment*experiment, data = direct_dye)
+#mean neighbor distance
+d_dyedye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
+#polarity
+d_dyedye_pol <- update(claydye_shoal, polarity ~ .)
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = acute.shoal.low))
-plot(simulateResiduals(fittedModel = acute.neigh.low))
-plot(simulateResiduals(fittedModel = acute.pol.low))
-
-#analyzing the models
-Anova(acute.shoal.low)
-Anova(acute.neigh.low)
-Anova(acute.pol.low)
-
-#post hoc pairwise comparison of the significant result
-acute.pol.low %>% emmeans(pairwise ~ treatment)
-```
-
-
-## Analyses for Experiment 3: Acute (Two Day) Dye Exposure with Stirring
-
-```{r dye stir}
-#models including all recordings
-stir.shoal <- glmmTMB(shoal_area ~ treatment + (1|tankID),
-                       data = dye.stir, family = gaussian())
-stir.neigh <- update(stir.shoal, mean_neighbor ~ .)
-stir.pol <- update(stir.shoal, polarity ~ ., family = beta_family())
-
-#checking the model assumptions
-plot(simulateResiduals(fittedModel = stir.shoal)) #assumptions not met
-plot(simulateResiduals(fittedModel = stir.neigh))
-plot(simulateResiduals(fittedModel = stir.pol))
+plot(d_dyedye_shoal)
+plot(d_dyedye_neigh)
+plot(d_dyedye_pol) #assumptions not met
 
 #transforming the data to meet model assumptions
-stir.trans <- dye.stir[,c(1:5, 9)]
-stir.trans$shoal_area <- log(dye.stir$shoal_area)
+trans_direct_dye <- direct_dye
+trans_direct_dye$polarity <- asin(sqrt(trans_direct_dye$polarity))
 
 #the transformed model
-stirlog.shoal <- update(stir.shoal, . ~ ., data = stir.trans)
+d_trans_dye_pol <- update(d_dyedye_pol, . ~ ., data = trans_direct_dye)
 
 #checking the transformed model assumptions
-plot(simulateResiduals(fittedModel = stirlog.shoal))
+plot(d_trans_dye_pol)
 
 #analyzing the models
-Anova(stirlog.shoal)
-Anova(stir.neigh)
-Anova(stir.pol)
-
-
-#models including only recordings where the flux condition visibility was high
-stir.shoal.high <- update(stir.shoal, . ~ ., data = high.stir)
-stir.neigh.high <- update(stir.neigh, . ~ ., data = high.stir)
-stir.pol.high <- update(stir.pol, . ~ ., data = high.stir)
-
-#checking the model assumptions
-plot(simulateResiduals(fittedModel = stir.shoal.high))
-plot(simulateResiduals(fittedModel = stir.neigh.high))
-plot(simulateResiduals(fittedModel = stir.pol.high))
-
-#analyzing the models
-Anova(stir.shoal.high)
-Anova(stir.neigh.high)
-Anova(stir.pol.high)
-
-
-#models including only recordings where the flux condition visibility was low
-stir.shoal.low <- update(stir.shoal, . ~ ., data = low.stir)
-stir.neigh.low <- update(stir.neigh, . ~ ., data = low.stir)
-stir.pol.low <- update(stir.pol, . ~ ., data = low.stir)
-
-#checking the model assumptions
-plot(simulateResiduals(fittedModel = stir.shoal.low))
-plot(simulateResiduals(fittedModel = stir.neigh.low))
-plot(simulateResiduals(fittedModel = stir.pol.low))
-
-#analyzing the models
-Anova(stir.shoal.low)
-Anova(stir.neigh.low)
-Anova(stir.pol.low)
+Anova(d_dyedye_shoal)
+Anova(d_dyedye_neigh)
+Anova(d_trans_dye_pol)
 ```
 
 
+## Full Model Comparisons of the Acute Experiments
 
-## Analyses for Experiment 4: Acute (Two Day) Dye Exposure without Stirring
+```{r full}
+#averaging together the two morning recordings for each measure and for each
+#experiment by comparison (clay/dye, dye stirred/dye unstirred)
+morn_claydye <- clay_dye %>%
+                filter(recording %in% c("rec1", "rec3")) %>%
+                select(-recording) %>%
+                group_by(shoalID, treatment, experiment) %>%
+                summarize(shoal_area = mean(shoal_area),
+                          mean_neighbor = mean(mean_neighbor),
+                          polarity = mean(polarity))
+morn_dyedye <- stir_nostir %>%
+               filter(recording %in% c("rec1", "rec3")) %>%
+               select(-recording) %>%
+               group_by(shoalID, treatment, experiment) %>%
+               summarize(shoal_area = mean(shoal_area),
+                         mean_neighbor = mean(mean_neighbor),
+                         polarity = mean(polarity))
+#labeling these values as the morning values
+morn_claydye$time <- "morning"
+morn_dyedye$time <- "morning"
+#averaging together the afternoon values
+afte_claydye <- clay_dye %>%
+                filter(recording %in% c("rec2", "rec4")) %>%
+                select(-recording) %>%
+                group_by(shoalID, treatment, experiment) %>%
+                summarize(shoal_area = mean(shoal_area),
+                          mean_neighbor = mean(mean_neighbor),
+                          polarity = mean(polarity))
+afte_dyedye <- stir_nostir %>%
+               filter(recording %in% c("rec2", "rec4")) %>%
+               select(-recording) %>%
+               group_by(shoalID, treatment, experiment) %>%
+               summarize(shoal_area = mean(shoal_area),
+                         mean_neighbor = mean(mean_neighbor),
+                         polarity = mean(polarity))
+#labeling these values as the afternoon values
+afte_claydye$time <- "afternoon"
+afte_dyedye$time <- "afternoon"
+#combining the averaged morning and afternoon values into a single dataframe
+#for each two-experiment comparison
+full_claydye <- rbind(morn_claydye, afte_claydye)
+full_dyedye <- rbind(morn_dyedye, afte_dyedye)
 
-```{r dye nostir}
-#models including all recordings
-nostir.shoal <- glmmTMB(shoal_area ~ treatment + (1|tankID),
-                       data = dye.nostir, family = gaussian())
-nostir.neigh <- update(nostir.shoal, mean_neighbor ~ .)
-nostir.pol <- update(nostir.shoal, polarity ~ ., family = beta_family())
+
+#the clay vs dye models
+
+#mean shoal area
+claydye_shoal <- lm(shoal_area ~ treatment*experiment, data = full_claydye)
+#mean neighbor distance
+claydye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
+#polarity
+claydye_pol <- update(claydye_shoal, polarity ~ .)
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = nostir.shoal))
-plot(simulateResiduals(fittedModel = nostir.neigh))
-plot(simulateResiduals(fittedModel = nostir.pol))
+plot(claydye_shoal) #assumptions not met
+plot(claydye_neigh)
+plot(claydye_pol)
+
+#transforming the data to meet model assumptions
+trans_full_claydye <- full_claydye
+trans_full_claydye$shoal_area <- log(trans_full_claydye$shoal_area)
+
+#the transformed model
+trans_claydye_shoal <- update(claydye_shoal, . ~ ., data = trans_full_claydye)
+
+#checking the transformed model assumptions
+plot(trans_claydye_shoal)
 
 #analyzing the models
-Anova(nostir.shoal)
-Anova(nostir.neigh)
-Anova(nostir.pol)
+Anova(claydye_shoal)
+Anova(claydye_neigh)
+Anova(claydye_pol)
 
 
-#models including only recordings where the flux condition visibility was high
-nostir.shoal.high <- update(nostir.shoal, . ~ ., data = high.nostir)
-nostir.neigh.high <- update(nostir.neigh, . ~ ., data = high.nostir)
-nostir.pol.high <- update(nostir.pol, . ~ ., data = high.nostir)
+#the stirred vs unstirred dye models
+
+#mean shoal area
+dyedye_shoal <- lm(shoal_area ~ treatment*experiment, data = full_dyedye)
+#mean neighbor distance
+dyedye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
+#polarity
+dyedye_pol <- update(claydye_shoal, polarity ~ .)
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = nostir.shoal.high))
-plot(simulateResiduals(fittedModel = nostir.neigh.high))
-plot(simulateResiduals(fittedModel = nostir.pol.high))
+plot(dyedye_shoal)
+plot(dyedye_neigh)
+plot(dyedye_pol)
 
 #analyzing the models
-Anova(nostir.shoal.high)
-Anova(nostir.neigh.high)
-Anova(nostir.pol.high)
-
-
-#models including only recordings where the flux condition visibility was low
-nostir.shoal.low <- update(nostir.shoal, . ~ ., data = low.nostir)
-nostir.neigh.low <- update(nostir.neigh, . ~ ., data = low.nostir)
-nostir.pol.low <- update(nostir.pol, . ~ ., data = low.nostir)
-
-#checking the model assumptions
-plot(simulateResiduals(fittedModel = nostir.shoal.low))
-plot(simulateResiduals(fittedModel = nostir.neigh.low))
-plot(simulateResiduals(fittedModel = nostir.pol.low))
-
-#analyzing the models
-Anova(nostir.shoal.low)
-Anova(nostir.neigh.low)
-Anova(nostir.pol.low)
+Anova(dyedye_shoal)
+Anova(dyedye_neigh)
+Anova(dyedye_pol)
 ```
