@@ -92,8 +92,7 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
     #adding NA rows from dfNA to start of file when it starts on a frame later
     #than 0
     
-    if (minfish > 0) {
-      #across one fish file within a video
+    if (minfish > 0) {  #across one fish file within a video
       shoal[[z]] <- rbind(dfNA[1:(minfish), ], shoal[[z]])
     }
     
@@ -106,7 +105,7 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
       #across one fish file within one video
       shoal[[z]] <- rbind(shoal[[z]], dfNA[(maxfish + 2):(maxframe + 1), ])
     }
-  }  #z loop
+  }  #z loop end
     
   #creating an empty dataframe to hold the neighbor distance values
   distances <- data.frame(matrix(nrow = nrow(shoal[[1]]), ncol = 6))
@@ -132,7 +131,7 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
     
     #adding the distance values into the distance dataframe
     for (d in 1:length(neighbors)) {
-      distances[a, d] <- neighbors[d]
+      distances[a,d] <- neighbors[d]
     }
     
     
@@ -207,5 +206,5 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   i = i+fish
 }  #k loop
 
-write_csv(finalframe, "E://2 Day Mini Kaolin Turb Flux Experiment/2week_clay_social_data.csv")
+write_csv(finalframe, "E://2 Day Mini Kaolin Turb Flux Experiment/chronic_clay_social_data.csv")
 ```

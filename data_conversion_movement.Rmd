@@ -1,5 +1,5 @@
 x`---
-title: "Fluctuating Turbidity Data Conversion"
+title: "Fluctuating Turbidity Data Conversion - Low Stable"
 author: "Hannah Anderson"
 date: "2023-01-16"
 output: pdf_document
@@ -22,13 +22,14 @@ across files.
 
 For our experiments fish occurred in either 3- or 4-fish groups. Change the
 value of "fish" in the following chunk to account for the number of fish in the
-experiment currently being analyzed.
+experiment currently being analyzed (3 fish for the chronic clay experiment,
+4 fish for all other experiments).
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 #setting the working directory
-knitr::opts_knit$set(root.dir = "D://2 Week Kaolin Turb Flux Experiment/test")
+knitr::opts_knit$set(root.dir = "E://2 Day Mini Kaolin Turb Flux Experiment/datafiles_processed")
 library(tidyverse)
 library(data.table)
 library(zoo)
@@ -236,13 +237,14 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   finalframe$recording[k] <- str_hold[[1]][2]
   #due to the way speed was calculated, adding all the speeds together also
   #gives the total distance moved
-  finalframe$distance_cm[k] <- sum(unlist(shoalspeed, use.names = FALSE),
+  finalframe$totaldist_cm[k] <- sum(unlist(shoalspeed, use.names = FALSE),
                                    na.rm = TRUE)
   finalframe$mean_speed[k] <- mean(unlist(shoalspeed, use.names = FALSE),
                                    na.rm = TRUE)
-  #ratio of active to inactive windows
+  #amount of time spent active out of total tracked time
   finalframe$activity_ratio[k] <- (length(which(rollactive$activity == "active")))/
-                                  (length(which(rollactive$activity == "still")))
+                                  (length(which(rollactive$activity == "active")) +
+                                   length(which(rollactive$activity == "still")))
   finalframe$speed_variance[k] <- var(unlist(shoalspeed, use.names = FALSE),
                                       na.rm = TRUE)
   finalframe$max_speed[k] <- max(unlist(shoalspeed, use.names = FALSE),
@@ -253,5 +255,5 @@ for (k in 1:(length(list_csv)/fish)) {  #across the whole file list
   i = i+fish
 }
 
-write_csv(finalframe, "E://2 Day Mini Kaolin Turb Flux Experiment/2day_clay_movement_data.csv")
+write_csv(finalframe, "E://2 Day Mini Kaolin Turb Flux Experiment/acute_clay_movement_data.csv")
 ```
