@@ -51,33 +51,8 @@ library(data.table)
 
 #importing the data
 #chronic_clay <- read_csv("2week_clay_social_data.csv")
-acute_clay <- read_csv("acute_clay_social_data.csv")
-dye_stir <- read_csv("stir_dye_social_data.csv")
-dye_nostir <- read_csv("nostir_dye_social_data.csv")
-
-#changing the tank IDs to shoal IDs to ensure IDs are different between the
-#experiments that get statistically compared
-acute_clay <- acute_clay %>%
-              rename_at("tankID", ~"shoalID")
-acute_clay$shoalID <- gsub("tank", "clay", acute_clay$shoalID)
-dye_stir <- dye_stir %>%
-            rename_at("tankID", ~"shoalID")
-dye_stir$shoalID <- gsub("tank", "dyeStir", dye_stir$shoalID)
-dye_nostir <- dye_nostir %>%
-              rename_at("tankID", ~"shoalID")
-dye_nostir$shoalID <- gsub("tank", "dyeNoStir", dye_nostir$shoalID)
-
-#adding a column to identify experiment
-acute_clay$experiment <- "clay"
-dye_stir$experiment <- "dye_stir"
-dye_nostir$experiment <- "dye_no_stir"
-
-#combining the clay and stirred dye data together in a single data frame for
-#statistical comparison
-clay_dye <- rbind(acute_clay, dye_stir)
-#combining the stirred and unstirred dye data together in a single data frame
-#for statistical comparison
-stir_nostir <- rbind(dye_stir, dye_nostir)
+clay_dye <- read_csv("comparison_clay_dye_social_data.csv")
+dye_dye <- read_csv("comparison_dye_dye_social_data.csv")
 ```
 
 
@@ -176,14 +151,14 @@ The first set of direct comparisons is between the acute (two day) clay experime
 #sub-setting the data to only include recording 4
 direct_claydye <- clay_dye %>%
                   filter(recording == "rec4")
-direct_dye <- stir_nostir %>%
+direct_dyedye <- dye_dye %>%
               filter(recording == "rec4")
 
 
 #the clay vs dye models
 
 #mean shoal area
-d_claydye_shoal <- lm(shoal_area ~ treatment + experiment,
+d_claydye_shoal <- lm(shoal_area ~ treatment*experiment,
                       data = direct_claydye)
 #mean neighbor distance
 d_claydye_neigh <- update(d_claydye_shoal, mean_neighbor ~ .)
@@ -191,42 +166,61 @@ d_claydye_neigh <- update(d_claydye_shoal, mean_neighbor ~ .)
 d_claydye_pol <- update(d_claydye_shoal, polarity ~ .)
 
 #checking the model assumptions
-plot(d_claydye_shoal)
-plot(d_claydye_neigh)
+plot(d_claydye_shoal) #assumptions not met
+plot(d_claydye_neigh) #assumptions not met
 plot(d_claydye_pol) #assumptions not met
 
 #transforming the data to meet model assumptions
 d_trans_claydye <- direct_claydye
+d_trans_claydye$shoal_area <- sqrt(d_trans_claydye$shoal_area+(3/8))
+d_trans_claydye$mean_neighbor <- log(d_trans_claydye$mean_neighbor)
 d_trans_claydye$polarity <- asin(sqrt(d_trans_claydye$polarity))
 
-#the transformed model
+#the transformed models
+trans_d_claydye_shoal <- update(d_claydye_shoal, . ~ ., data = d_trans_claydye)
+trans_d_claydye_neigh <- update(d_claydye_neigh, . ~ ., data = d_trans_claydye)
 trans_d_claydye_pol <- update(d_claydye_pol, . ~ ., data = d_trans_claydye)
 
 #checking the transformed model assumptions
+plot(trans_d_claydye_shoal)
+plot(trans_d_claydye_neigh)
 plot(trans_d_claydye_pol)
 
 #analyzing the models
-Anova(d_claydye_shoal)
-Anova(d_claydye_neigh)
+Anova(trans_d_claydye_shoal)
+Anova(trans_d_claydye_neigh)
 Anova(trans_d_claydye_pol)
 
 
 #the stirred vs unstirred dye models
 
 #mean shoal area
-d_dyedye_shoal <- lm(shoal_area ~ treatment*experiment, data = direct_dye)
+d_dyedye_shoal <- lm(shoal_area ~ treatment*experiment, data = direct_dyedye)
 #mean neighbor distance
 d_dyedye_neigh <- update(d_dyedye_shoal, mean_neighbor ~ .)
 #polarity
 d_dyedye_pol <- update(d_dyedye_shoal, polarity ~ .)
 
 #checking the model assumptions
-plot(d_dyedye_shoal)
+plot(d_dyedye_shoal) #assumptions not met
 plot(d_dyedye_neigh)
-plot(d_dyedye_pol)
+plot(d_dyedye_pol) #assumptions not met
+
+#transforming the data to meet model assumptions
+trans_direct_dye <- direct_dyedye
+trans_direct_dye$shoal_area <- log(trans_direct_dye$shoal_area)
+trans_direct_dye$polarity <- asin(sqrt(trans_direct_dye$polarity))
+
+#the transformed model
+d_trans_dye_shoal <- update(d_dyedye_shoal, . ~ ., data = trans_direct_dye)
+d_trans_dye_pol <- update(d_dyedye_pol, . ~ ., data = trans_direct_dye)
+
+#checking the transformed model assumptions
+plot(d_trans_dye_shoal)
+plot(d_trans_dye_pol)
 
 #analyzing the models
-Anova(d_dyedye_shoal)
+Anova(d_trans_dye_shoal)
 Anova(d_dyedye_neigh)
 Anova(d_trans_dye_pol)
 ```
@@ -244,7 +238,7 @@ morn_claydye <- clay_dye %>%
                 summarize(shoal_area = mean(shoal_area),
                           mean_neighbor = mean(mean_neighbor),
                           polarity = mean(polarity))
-morn_dyedye <- stir_nostir %>%
+morn_dyedye <- dye_dye %>%
                filter(recording %in% c("rec1", "rec3")) %>%
                select(-recording) %>%
                group_by(shoalID, treatment, experiment) %>%
@@ -262,7 +256,7 @@ afte_claydye <- clay_dye %>%
                 summarize(shoal_area = mean(shoal_area),
                           mean_neighbor = mean(mean_neighbor),
                           polarity = mean(polarity))
-afte_dyedye <- stir_nostir %>%
+afte_dyedye <- dye_dye %>%
                filter(recording %in% c("rec2", "rec4")) %>%
                select(-recording) %>%
                group_by(shoalID, treatment, experiment) %>%
@@ -281,8 +275,7 @@ full_dyedye <- rbind(morn_dyedye, afte_dyedye)
 #the clay vs dye models
 
 #mean shoal area
-claydye_shoal <- lm(shoal_area ~ treatment + experiment + time,
-                    data = full_claydye)
+claydye_shoal <- lm(shoal_area ~ treatment*experiment*time, data = full_claydye)
 #mean neighbor distance
 claydye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
 #polarity
@@ -308,33 +301,40 @@ Anova(trans_claydye_shoal)
 Anova(claydye_neigh)
 Anova(claydye_pol)
 
+#post hoc pairwise comparisons of the significant results
+trans_claydye_shoal %>% emmeans(pairwise ~ treatment:experiment)
+claydye_pol %>% emmeans(pairwise ~ treatment:experiment)
+
 
 #the stirred vs unstirred dye models
 
 #mean shoal area
 dyedye_shoal <- lm(shoal_area ~ treatment*experiment*time, data = full_dyedye)
 #mean neighbor distance
-dyedye_neigh <- update(dyedye_shoal, mean_neighbor ~ .)
+dyedye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
 #polarity
-dyedye_pol <- update(dyedye_shoal, polarity ~ .)
+dyedye_pol <- update(claydye_shoal, polarity ~ .)
 
 #checking the model assumptions
-plot(dyedye_shoal)
+plot(dyedye_shoal) #assumptions not met
 plot(dyedye_neigh)
-plot(dyedye_pol) #assumptions not met
+plot(dyedye_pol)
 
 #transforming the data to meet model assumptions
 trans_full_dyedye <- full_dyedye
-trans_full_dyedye$polarity <- asin(sqrt(trans_full_dyedye$polarity))
+trans_full_dyedye$shoal_area <- log(trans_full_dyedye$shoal_area)
 
 #the transformed model
-trans_dyedye_pol <- update(dyedye_pol, . ~ ., data = trans_full_dyedye)
+trans_dyedye_shoal <- update(dyedye_shoal, . ~ ., data = trans_full_dyedye)
 
 #checking the transformed model assumptions
-plot(trans_dyedye_pol)
+plot(trans_dyedye_shoal)
 
 #analyzing the models
-Anova(dyedye_shoal)
+Anova(trans_dyedye_shoal)
 Anova(dyedye_neigh)
-Anova(trans_dyedye_pol)
+Anova(dyedye_pol)
+
+#post hoc pairwise comparisons of the significant result
+trans_d_claydye_shoal %>% emmeans(pairwise ~ treatment)
 ```
