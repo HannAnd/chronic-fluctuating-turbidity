@@ -50,10 +50,10 @@ library(DHARMa)
 library(data.table)
 
 #importing the data
-chronic_clay <- read_csv("2week_clay_social_data.csv")
-acute_clay <- read_csv("2day_clay_social_data.csv")
-dye_stir <- read_csv("dye_stir_social_data.csv")
-dye_nostir <- read_csv("dye_nostir_social_data.csv")
+#chronic_clay <- read_csv("2week_clay_social_data.csv")
+acute_clay <- read_csv("acute_clay_social_data.csv")
+dye_stir <- read_csv("stir_dye_social_data.csv")
+dye_nostir <- read_csv("nostir_dye_social_data.csv")
 
 #changing the tank IDs to shoal IDs to ensure IDs are different between the
 #experiments that get statistically compared
@@ -183,21 +183,32 @@ direct_dye <- stir_nostir %>%
 #the clay vs dye models
 
 #mean shoal area
-d_claydye_shoal <- lm(shoal_area ~ treatment*experiment, data = direct_claydye)
+d_claydye_shoal <- lm(shoal_area ~ treatment + experiment,
+                      data = direct_claydye)
 #mean neighbor distance
-d_claydye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
+d_claydye_neigh <- update(d_claydye_shoal, mean_neighbor ~ .)
 #polarity
-d_claydye_pol <- update(claydye_shoal, polarity ~ .)
+d_claydye_pol <- update(d_claydye_shoal, polarity ~ .)
 
 #checking the model assumptions
 plot(d_claydye_shoal)
 plot(d_claydye_neigh)
-plot(d_claydye_pol)
+plot(d_claydye_pol) #assumptions not met
+
+#transforming the data to meet model assumptions
+d_trans_claydye <- direct_claydye
+d_trans_claydye$polarity <- asin(sqrt(d_trans_claydye$polarity))
+
+#the transformed model
+trans_d_claydye_pol <- update(d_claydye_pol, . ~ ., data = d_trans_claydye)
+
+#checking the transformed model assumptions
+plot(trans_d_claydye_pol)
 
 #analyzing the models
 Anova(d_claydye_shoal)
 Anova(d_claydye_neigh)
-Anova(d_claydye_pol)
+Anova(trans_d_claydye_pol)
 
 
 #the stirred vs unstirred dye models
@@ -205,24 +216,14 @@ Anova(d_claydye_pol)
 #mean shoal area
 d_dyedye_shoal <- lm(shoal_area ~ treatment*experiment, data = direct_dye)
 #mean neighbor distance
-d_dyedye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
+d_dyedye_neigh <- update(d_dyedye_shoal, mean_neighbor ~ .)
 #polarity
-d_dyedye_pol <- update(claydye_shoal, polarity ~ .)
+d_dyedye_pol <- update(d_dyedye_shoal, polarity ~ .)
 
 #checking the model assumptions
 plot(d_dyedye_shoal)
 plot(d_dyedye_neigh)
-plot(d_dyedye_pol) #assumptions not met
-
-#transforming the data to meet model assumptions
-trans_direct_dye <- direct_dye
-trans_direct_dye$polarity <- asin(sqrt(trans_direct_dye$polarity))
-
-#the transformed model
-d_trans_dye_pol <- update(d_dyedye_pol, . ~ ., data = trans_direct_dye)
-
-#checking the transformed model assumptions
-plot(d_trans_dye_pol)
+plot(d_dyedye_pol)
 
 #analyzing the models
 Anova(d_dyedye_shoal)
@@ -280,7 +281,8 @@ full_dyedye <- rbind(morn_dyedye, afte_dyedye)
 #the clay vs dye models
 
 #mean shoal area
-claydye_shoal <- lm(shoal_area ~ treatment*experiment, data = full_claydye)
+claydye_shoal <- lm(shoal_area ~ treatment + experiment + time,
+                    data = full_claydye)
 #mean neighbor distance
 claydye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
 #polarity
@@ -302,7 +304,7 @@ trans_claydye_shoal <- update(claydye_shoal, . ~ ., data = trans_full_claydye)
 plot(trans_claydye_shoal)
 
 #analyzing the models
-Anova(claydye_shoal)
+Anova(trans_claydye_shoal)
 Anova(claydye_neigh)
 Anova(claydye_pol)
 
@@ -310,19 +312,29 @@ Anova(claydye_pol)
 #the stirred vs unstirred dye models
 
 #mean shoal area
-dyedye_shoal <- lm(shoal_area ~ treatment*experiment, data = full_dyedye)
+dyedye_shoal <- lm(shoal_area ~ treatment*experiment*time, data = full_dyedye)
 #mean neighbor distance
-dyedye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
+dyedye_neigh <- update(dyedye_shoal, mean_neighbor ~ .)
 #polarity
-dyedye_pol <- update(claydye_shoal, polarity ~ .)
+dyedye_pol <- update(dyedye_shoal, polarity ~ .)
 
 #checking the model assumptions
 plot(dyedye_shoal)
 plot(dyedye_neigh)
-plot(dyedye_pol)
+plot(dyedye_pol) #assumptions not met
+
+#transforming the data to meet model assumptions
+trans_full_dyedye <- full_dyedye
+trans_full_dyedye$polarity <- asin(sqrt(trans_full_dyedye$polarity))
+
+#the transformed model
+trans_dyedye_pol <- update(dyedye_pol, . ~ ., data = trans_full_dyedye)
+
+#checking the transformed model assumptions
+plot(trans_dyedye_pol)
 
 #analyzing the models
 Anova(dyedye_shoal)
 Anova(dyedye_neigh)
-Anova(dyedye_pol)
+Anova(trans_dyedye_pol)
 ```
