@@ -1,0 +1,582 @@
+---
+title: "Direct and Full Comparison Plots"
+author: "Hannah Anderson"
+date: "2024-03-28"
+output: pdf_document
+---
+
+
+## Setup
+
+```{r setup, include = FALSE, message = FALSE}
+setwd("C://Users/hande/Documents/R/fluctuating-turbidity")
+library(tidyverse)
+library(ggplot2)
+library(gridExtra)
+library(ggpubr)
+
+#importing the clay/dye comparison data
+claydye_move <- read_csv("comparison_clay_dye_movement_data.csv")
+claydye_social <- read_csv("comparison_clay_dye_social_data.csv")
+claydye_boris_all <- read_csv("comparison_clay_dye_BORIS_all_data.csv")
+claydye_boris_agg <- read_csv("comparison_clay_dye_BORIS_agg_data.csv")
+
+#importing the stirred/unstirred dye comparison data
+dyedye_move <- read_csv("comparison_dye_dye_movement_data.csv")
+dyedye_social <- read_csv("comparison_dye_dye_social_data.csv")
+dyedye_boris_all <- read_csv("comparison_dye_dye_BORIS_all_data.csv")
+dyedye_boris_agg <- read_csv("comparison_dye_dye_BORIS_agg_data.csv")
+```
+
+
+## Movement Plots, Direct Comparisons
+
+```{r movement direct}
+#the clay/dye comparison plots
+
+#mean speed
+c_direc_speed <- claydye_move %>%
+               filter(recording == "rec4") %>%
+               mutate(treatment = fct_relevel(treatment,
+                                              "clear", "stable", "flux")) %>%
+               ggplot(aes(x = treatment, y = mean_speed,
+                          fill = interaction(experiment, treatment,
+                                             sep = ":"))) +
+              geom_boxplot() +
+              labs(fill = "Experiment:Treatment") +
+              xlab("Treatments") + ylab("Mean Speed (cm/s)") +
+              scale_fill_manual(values = 
+                                c("slategray1", "snow", "wheat1",
+                                  "snow3", "wheat4", "snow4")) +
+              ylim(2,13) +
+              theme_classic()
+#maximum speed
+c_direc_maxspeed <- claydye_move %>%
+                  filter(recording == "rec4") %>%
+                  mutate(treatment = fct_relevel(treatment,
+                                                 "clear", "stable", "flux")) %>%
+                  ggplot(aes(x = treatment, y = max_speed,
+                             fill = interaction(experiment, treatment,
+                                                sep = ":"))) +
+                  geom_boxplot() +
+                  labs(fill = "Experiment:Treatment") +
+                  xlab("Treatments") + ylab("Max Speed (cm/s)") +
+                  scale_fill_manual(values = 
+                                    c("slategray1", "snow", "wheat1",
+                                    "snow3", "wheat4", "snow4")) +
+                  ylim(10,35) +
+                  theme_classic()
+#activity ratio
+c_direc_activ <- claydye_move %>%
+               filter(recording == "rec4") %>%
+               mutate(treatment = fct_relevel(treatment,
+                                              "clear", "stable", "flux")) %>%
+               ggplot(aes(x = treatment, y = activity_ratio,
+                          fill = interaction(experiment, treatment,
+                                             sep = ":"))) +
+              geom_boxplot() +
+              labs(fill = "Experiment:Treatment") +
+              xlab("Treatments") + ylab("Ratio of Time Spent Active") +
+              scale_fill_manual(values = 
+                                c("slategray1", "snow", "wheat1",
+                                  "snow3", "wheat4", "snow4")) +
+              ylim(0,1) +
+              theme_classic()
+#maximum acceleration
+c_direc_maxaccel <- claydye_move %>%
+                  filter(recording == "rec4") %>%
+                  mutate(treatment = fct_relevel(treatment,
+                                                 "clear", "stable", "flux")) %>%
+                  ggplot(aes(x = treatment, y = max_acceleration,
+                             fill = interaction(experiment, treatment,
+                                                sep = ":"))) +
+                  geom_boxplot() +
+                  labs(fill = "Experiment:Treatment") +
+                  xlab("Treatments") + ylab("Max Acceleration (cm/s^2)") +
+                  scale_fill_manual(values = 
+                                   c("slategray1", "snow", "wheat1",
+                                   "snow3", "wheat4", "snow4")) +
+                  ylim(2,9) +
+                  theme_classic()
+#total distance traveled
+c_direc_dist <- claydye_move %>%
+              filter(recording == "rec4") %>%
+              mutate(treatment = fct_relevel(treatment,
+                                             "clear", "stable", "flux")) %>%
+              ggplot(aes(x = treatment, y = totaldist_cm,
+                         fill = interaction(experiment, treatment,
+                                            sep = ":"))) +
+              geom_boxplot() +
+              labs(fill = "Experiment:Treatment") +
+              xlab("Treatments") + ylab("Total Distance Traveled (cm)") +
+              scale_fill_manual(values = 
+                                c("slategray1", "snow", "wheat1",
+                                  "snow3", "wheat4", "snow4")) +
+              ylim(4000,23500) +
+              theme_classic()
+
+
+#the stirred dye/unstirred dye comparison plots
+
+#mean speed
+d_direc_speed <- dyedye_move %>%
+                 filter(recording == "rec4") %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "stable", "flux")) %>%
+                 ggplot(aes(x = treatment, y = mean_speed,
+                            fill = interaction(experiment, treatment,
+                                               sep = ":"))) +
+                 geom_boxplot() +
+                 labs(fill = "Experiment:Treatment") +
+                 xlab("Treatments") + ylab("Mean Speed (cm/s)") +
+                 scale_fill_manual(values = c("honeydew", "snow",
+                                              "honeydew3", "snow3",
+                                              "honeydew4", "snow4")) +
+                 ylim(3,16.5) +
+                 theme_classic()
+#maximum speed
+d_direc_maxspeed <- dyedye_move %>%
+                    filter(recording == "rec4") %>%
+                    mutate(treatment = fct_relevel(treatment,
+                                                   "clear", "stable", "flux")) %>%
+                    ggplot(aes(x = treatment, y = max_speed,
+                               fill = interaction(experiment, treatment,
+                                                  sep = ":"))) +
+                    geom_boxplot() +
+                    labs(fill = "Experiment:Treatment") +
+                    xlab("Treatments") + ylab("Max Speed (cm/s)") +
+                    scale_fill_manual(values = c("honeydew", "snow",
+                                                 "honeydew3", "snow3",
+                                                 "honeydew4", "snow4")) +
+                    ylim(12,77) +
+                    theme_classic()
+#activity ratio
+d_direc_activ <- dyedye_move %>%
+                 filter(recording == "rec4") %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "stable", "flux")) %>%
+                 ggplot(aes(x = treatment, y = activity_ratio,
+                            fill = interaction(experiment, treatment,
+                                               sep = ":"))) +
+                 geom_boxplot() +
+                 labs(fill = "Experiment:Treatment") +
+                 xlab("Treatments") + ylab("Ratio of Time Spent Active") +
+                 scale_fill_manual(values = c("honeydew", "snow",
+                                              "honeydew3", "snow3",
+                                              "honeydew4", "snow4")) +
+                 ylim(0,1) +
+                 theme_classic()
+#maximum acceleration
+d_direc_maxaccel <- dyedye_move %>%
+                    filter(recording == "rec4") %>%
+                    mutate(treatment = fct_relevel(treatment,
+                                                   "clear", "stable", "flux")) %>%
+                    ggplot(aes(x = treatment, y = max_acceleration,
+                               fill = interaction(experiment, treatment,
+                                                  sep = ":"))) +
+                    geom_boxplot() +
+                    labs(fill = "Experiment:Treatment") +
+                    xlab("Treatments") + ylab("Max Acceleration (cm/s^2)") +
+                    scale_fill_manual(values = c("honeydew", "snow",
+                                                 "honeydew3", "snow3",
+                                                 "honeydew4", "snow4")) +
+                    ylim(2,12.5) +
+                    theme_classic()
+#total distance traveled
+d_direc_dist <- dyedye_move %>%
+                filter(recording == "rec4") %>%
+                mutate(treatment = fct_relevel(treatment,
+                                               "clear", "stable", "flux")) %>%
+                ggplot(aes(x = treatment, y = totaldist_cm,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                xlab("Treatments") + ylab("Total Distance Traveled (cm)") +
+                scale_fill_manual(values = c("honeydew", "snow",
+                                             "honeydew3", "snow3",
+                                             "honeydew4", "snow4")) +
+                ylim(4400,39500) +
+                theme_classic()
+```
+
+
+## Movement Plots, Full Comparisons
+
+```{r movement full}
+#adding identifier for the visibility in the flux condition during each
+#recording
+claydye_move$flux_level <- claydye_move$recording %>%
+                           fct_collapse(low = c("rec1", "rec3"),
+                                        high = c("rec2", "rec4"))
+dyedye_move$flux_level <- dyedye_move$recording %>%
+                          fct_collapse(low = c("rec1", "rec3"),
+                                       high = c("rec2", "rec4"))
+
+
+#the clay/dye comparison plots
+
+#mean speed
+c_full_speed <- claydye_move %>%
+                mutate(treatment = fct_relevel(treatment,
+                                               "clear", "stable", "flux")) %>%
+                ggplot(aes(x = flux_level, y = mean_speed,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                scale_fill_manual(values =
+                                  c("slategray1", "snow", "wheat1",
+                                    "snow3", "wheat4", "snow4")) +
+                ylim(2,13) +
+                theme_classic()
+#maximum speed
+c_full_maxspeed <- claydye_move %>%
+                   mutate(treatment = fct_relevel(treatment,
+                                                  "clear", "stable", "flux")) %>%
+                   ggplot(aes(x = flux_level, y = max_speed,
+                              fill = interaction(experiment, treatment,
+                                                 sep = ":"))) +
+                   geom_boxplot() +
+                   labs(fill = "Experiment:Treatment") +
+                   xlab("Treatments") + ylab("Max Speed (cm/s)") +
+                   scale_fill_manual(values = 
+                                     c("slategray1", "snow", "wheat1",
+                                     "snow3", "wheat4", "snow4")) +
+                   ylim(10,35) +
+                   theme_classic()
+#activity ratio
+c_full_activ <- claydye_move %>%
+                mutate(treatment = fct_relevel(treatment,
+                                               "clear", "stable", "flux")) %>%
+                ggplot(aes(x = flux_level, y = activity_ratio,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+               geom_boxplot() +
+               labs(fill = "Experiment:Treatment") +
+               xlab("Treatments") + ylab("Ratio of Time Spent Active") +
+               scale_fill_manual(values = 
+                                 c("slategray1", "snow", "wheat1",
+                                   "snow3", "wheat4", "snow4")) +
+               ylim(0,1) +
+               theme_classic()
+#maximum acceleration
+c_full_maxaccel <- claydye_move %>%
+                   mutate(treatment = fct_relevel(treatment,
+                                                  "clear", "stable", "flux")) %>%
+                   ggplot(aes(x = flux_level, y = max_acceleration,
+                              fill = interaction(experiment, treatment,
+                                                 sep = ":"))) +
+                   geom_boxplot() +
+                   labs(fill = "Experiment:Treatment") +
+                   xlab("Treatments") + ylab("Max Acceleration (cm/s^2)") +
+                   scale_fill_manual(values = 
+                                    c("slategray1", "snow", "wheat1",
+                                    "snow3", "wheat4", "snow4")) +
+                   ylim(2,9) +
+                   theme_classic()
+#total distance traveled
+c_full_dist <- claydye_move %>%
+               mutate(treatment = fct_relevel(treatment,
+                                              "clear", "stable", "flux")) %>%
+               ggplot(aes(x = flux_level, y = totaldist_cm,
+                          fill = interaction(experiment, treatment,
+                                             sep = ":"))) +
+               geom_boxplot() +
+               labs(fill = "Experiment:Treatment") +
+               xlab("Treatments") + ylab("Total Distance Traveled (cm)") +
+               scale_fill_manual(values = 
+                                 c("slategray1", "snow", "wheat1",
+                                   "snow3", "wheat4", "snow4")) +
+               ylim(4000,23500) +
+               theme_classic()
+
+
+#the stirred dye/unstirred dye comparison plots
+
+#mean speed
+d_full_speed <- dyedye_move %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "stable", "flux")) %>%
+                 ggplot(aes(x = flux_level, y = mean_speed,
+                            fill = interaction(experiment, treatment,
+                                               sep = ":"))) +
+                 geom_boxplot() +
+                 labs(fill = "Experiment:Treatment") +
+                 xlab("Treatments") + ylab("Mean Speed (cm/s)") +
+                 scale_fill_manual(values = c("honeydew", "snow",
+                                              "honeydew3", "snow3",
+                                              "honeydew4", "snow4")) +
+                 ylim(3,16.5) +
+                 theme_classic()
+#maximum speed
+d_full_maxspeed <- dyedye_move %>%
+                    mutate(treatment = fct_relevel(treatment,
+                                                   "clear", "stable", "flux")) %>%
+                    ggplot(aes(x = flux_level, y = max_speed,
+                               fill = interaction(experiment, treatment,
+                                                  sep = ":"))) +
+                    geom_boxplot() +
+                    labs(fill = "Experiment:Treatment") +
+                    xlab("Treatments") + ylab("Max Speed (cm/s)") +
+                    scale_fill_manual(values = c("honeydew", "snow",
+                                                 "honeydew3", "snow3",
+                                                 "honeydew4", "snow4")) +
+                    ylim(12,77) +
+                    theme_classic()
+#activity ratio
+d_full_activ <- dyedye_move %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "stable", "flux")) %>%
+                 ggplot(aes(x = flux_level, y = activity_ratio,
+                            fill = interaction(experiment, treatment,
+                                               sep = ":"))) +
+                 geom_boxplot() +
+                 labs(fill = "Experiment:Treatment") +
+                 xlab("Treatments") + ylab("Ratio of Time Spent Active") +
+                 scale_fill_manual(values = c("honeydew", "snow",
+                                              "honeydew3", "snow3",
+                                              "honeydew4", "snow4")) +
+                 ylim(0,1) +
+                 theme_classic()
+#maximum acceleration
+d_full_maxaccel <- dyedye_move %>%
+                    mutate(treatment = fct_relevel(treatment,
+                                                   "clear", "stable", "flux")) %>%
+                    ggplot(aes(x = flux_level, y = max_acceleration,
+                               fill = interaction(experiment, treatment,
+                                                  sep = ":"))) +
+                    geom_boxplot() +
+                    labs(fill = "Experiment:Treatment") +
+                    xlab("Treatments") + ylab("Max Acceleration (cm/s^2)") +
+                    scale_fill_manual(values = c("honeydew", "snow",
+                                                 "honeydew3", "snow3",
+                                                 "honeydew4", "snow4")) +
+                    ylim(2,12.5) +
+                    theme_classic()
+#total distance traveled
+d_full_dist <- dyedye_move %>%
+                mutate(treatment = fct_relevel(treatment,
+                                               "clear", "stable", "flux")) %>%
+                ggplot(aes(x = flux_level, y = totaldist_cm,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                xlab("Treatments") + ylab("Total Distance Traveled (cm)") +
+                scale_fill_manual(values = c("honeydew", "snow",
+                                             "honeydew3", "snow3",
+                                             "honeydew4", "snow4")) +
+                ylim(4400,39500) +
+                theme_classic()
+```
+
+
+## TRex Social Plots, Direct Comparisons
+
+```{r social direct}
+c_direc_polarity <- claydye_social %>%
+                    filter(recording == "rec4") %>%
+                    mutate(treatment = fct_relevel(treatment,
+                                                   "clear", "flux",
+                                                   "stable")) %>%
+                    ggplot(aes(x = treatment, y = polarity,
+                               fill = interaction(experiment, treatment,
+                                                  sep = ":"))) +
+                    geom_boxplot() +
+                    labs(fill = "Experiment:Treatment") +
+                    xlab("Treatments") +
+                    ylab("Polarity (1-circular variance)") +
+                    scale_fill_manual(values = c("slategray1", "snow", "wheat1",
+                                                 "snow3", "wheat4", "snow4")) +
+                    ylim(0.4,0.7) +
+                    theme_classic()
+c_direc_shoal <- claydye_social %>%
+                 filter(recording == "rec4") %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "flux", "stable")) %>%
+                 ggplot(aes(x = treatment, y = shoal_area,
+                            fill = interaction(experiment, treatment,
+                                               sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                xlab("Treatments") + ylab("Shoal Area (cm^2)") +
+                scale_fill_manual(values = c("slategray1", "snow", "wheat1",
+                                             "snow3", "wheat4", "snow4")) +
+                ylim(10,115) +
+                theme_classic()
+c_direc_neighbor <- claydye_social %>%
+                    filter(recording == "rec4") %>%
+                    mutate(treatment = fct_relevel(treatment,
+                                                   "clear", "flux",
+                                                   "stable")) %>%
+                    ggplot(aes(x = treatment, y = mean_neighbor,
+                               fill = interaction(experiment, treatment,
+                                                  sep = ":"))) +
+                    geom_boxplot() +
+                    labs(fill = "Experiment:Treatment") +
+                    xlab("Treatments") + ylab("Mean Neighbor Distance (cm)") +
+                    scale_fill_manual(values = c("slategray1", "snow", "wheat1",
+                                                 "snow3", "wheat4", "snow4")) +
+                    ylim(6,20) +
+                    theme_classic()
+
+d_direc_polarity <- dyedye_social %>%
+                    filter(recording == "rec4") %>%
+                    mutate(treatment = fct_relevel(treatment,
+                                                   "clear", "flux",
+                                                   "stable")) %>%
+                    ggplot(aes(x = treatment, y = polarity,
+                               fill = interaction(experiment, treatment,
+                                                  sep = ":"))) +
+                    geom_boxplot() +
+                    labs(fill = "Experiment:Treatment") +
+                    xlab("Treatments") +
+                    ylab("Polarity (1-circular variance)") +
+                    scale_fill_manual(values = c("honeydew", "snow",
+                                                 "honeydew3", "snow3",
+                                                 "honeydew4", "snow4")) +
+                  ylim(0.4,0.6) +
+                  theme_classic()
+d_direc_shoal <- dyedye_social %>%
+                 filter(recording == "rec4") %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "flux", "stable")) %>%
+                 ggplot(aes(x = treatment, y = shoal_area,
+                            fill = interaction(experiment, treatment,
+                                               sep = ":"))) +
+                 geom_boxplot() +
+                 labs(fill = "Experiment:Treatment") +
+                 xlab("Treatments") + ylab("Shoal Area (cm^2)") +
+                 scale_fill_manual(values = c("honeydew", "snow",
+                                              "honeydew3", "snow3",
+                                              "honeydew4", "snow4")) +
+                 ylim(10,125) +
+                 theme_classic()
+d_direc_neighbor <- dyedye_social %>%
+                    filter(recording == "rec4") %>%
+                    mutate(treatment = fct_relevel(treatment,
+                                                   "clear", "flux",
+                                                   "stable")) %>%
+                    ggplot(aes(x = treatment, y = mean_neighbor,
+                               fill = interaction(experiment, treatment,
+                                                  sep = ":"))) +
+                    geom_boxplot() +
+                    labs(fill = "Experiment:Treatment") +
+                    xlab("Treatments") + ylab("Mean Neighbor Distance (cm)") +
+                    scale_fill_manual(values = c("honeydew", "snow",
+                                                 "honeydew3", "snow3",
+                                                 "honeydew4", "snow4")) +
+                    ylim(6,20) +
+                    theme_classic()
+```
+
+
+## TRex Social Plots, Full Comparisons
+
+```{r social full}
+#adding identifier for the visibility in the flux condition during each
+#recording
+claydye_social$flux_level <- claydye_social$recording %>%
+                           fct_collapse(low = c("rec1", "rec3"),
+                                        high = c("rec2", "rec4"))
+dyedye_social$flux_level <- dyedye_social$recording %>%
+                          fct_collapse(low = c("rec1", "rec3"),
+                                       high = c("rec2", "rec4"))
+
+c_full_polarity <- claydye_social %>%
+                   mutate(treatment = fct_relevel(treatment,
+                                                  "clear", "flux",
+                                                  "stable")) %>%
+                   ggplot(aes(x = flux_level, y = polarity,
+                              fill = interaction(experiment, treatment,
+                                                 sep = ":"))) +
+                   geom_boxplot() +
+                   labs(fill = "Experiment:Treatment") +
+                   xlab("Treatments") +
+                   ylab("Polarity (1-circular variance)") +
+                   scale_fill_manual(values = c("slategray1", "snow", "wheat1",
+                                                "snow3", "wheat4", "snow4")) +
+                   ylim(0.4,0.7) +
+                   theme_classic()
+c_full_shoal <- claydye_social %>%
+                mutate(treatment = fct_relevel(treatment,
+                                               "clear", "flux", "stable")) %>%
+                ggplot(aes(x = flux_level, y = shoal_area,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                xlab("Treatments") + ylab("Shoal Area (cm^2)") +
+                scale_fill_manual(values = c("slategray1", "snow", "wheat1",
+                                             "snow3", "wheat4", "snow4")) +
+                ylim(10,115) +
+                theme_classic()
+c_full_neighbor <- claydye_social %>%
+                   mutate(treatment = fct_relevel(treatment,
+                                                  "clear", "flux",
+                                                  "stable")) %>%
+                   ggplot(aes(x = flux_level, y = mean_neighbor,
+                              fill = interaction(experiment, treatment,
+                                                 sep = ":"))) +
+                   geom_boxplot() +
+                   labs(fill = "Experiment:Treatment") +
+                   xlab("Treatments") + ylab("Mean Neighbor Distance (cm)") +
+                   scale_fill_manual(values = c("slategray1", "snow", "wheat1",
+                                                "snow3", "wheat4", "snow4")) +
+                   ylim(6,20) +
+                   theme_classic()
+
+d_full_polarity <- dyedye_social %>%
+                   mutate(treatment = fct_relevel(treatment,
+                                                  "clear", "flux",
+                                                  "stable")) %>%
+                   ggplot(aes(x = flux_level, y = polarity,
+                              fill = interaction(experiment, treatment,
+                                                 sep = ":"))) +
+                   geom_boxplot() +
+                   labs(fill = "Experiment:Treatment") +
+                   xlab("Treatments") +
+                   ylab("Polarity (1-circular variance)") +
+                   scale_fill_manual(values = c("honeydew", "snow",
+                                                "honeydew3", "snow3",
+                                                "honeydew4", "snow4")) +
+                   ylim(0.4,0.6) +
+                   theme_classic()
+d_full_shoal <- dyedye_social %>%
+                mutate(treatment = fct_relevel(treatment,
+                                              "clear", "flux", "stable")) %>%
+                ggplot(aes(x = flux_level, y = shoal_area,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                xlab("Treatments") + ylab("Shoal Area (cm^2)") +
+                scale_fill_manual(values = c("honeydew", "snow",
+                                             "honeydew3", "snow3",
+                                             "honeydew4", "snow4")) +
+                ylim(10,125) +
+                theme_classic()
+d_full_neighbor <- dyedye_social %>%
+                   mutate(treatment = fct_relevel(treatment,
+                                                  "clear", "flux",
+                                                  "stable")) %>%
+                   ggplot(aes(x = flux_level, y = mean_neighbor,
+                              fill = interaction(experiment, treatment,
+                                                 sep = ":"))) +
+                   geom_boxplot() +
+                   labs(fill = "Experiment:Treatment") +
+                   xlab("Treatments") + ylab("Mean Neighbor Distance (cm)") +
+                   scale_fill_manual(values = c("honeydew", "snow",
+                                                "honeydew3", "snow3",
+                                                "honeydew4", "snow4")) +
+                   ylim(6,20) +
+                   theme_classic()
+```
+
+
+## BORIS Data Plots
+
+```{r boris}
+
+```
