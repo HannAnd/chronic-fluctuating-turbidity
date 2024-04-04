@@ -1,0 +1,164 @@
+---
+title: "Statistical Analyses of TRex Movement Data"
+author: "Hannah Anderson"
+date: "2023-06-26"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+## Setup
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+setwd("C://Users/hande/Documents/R/fluctuating-turbidity")
+library(tidyverse)
+library(glmmTMB)
+library(emmeans)
+library(car)
+library(DHARMa)
+
+#importing the data
+#chronic_clay <- read_csv("chronic_clay_movement_data.csv")
+clay_dye <- read_csv("comparison_clay_dye_movement_data.csv")
+dye_dye <- read_csv("comparison_dye_dye_movement_data.csv")
+```
+
+
+## Analyses for Experiment 1: Chronic (Two Week) Clay Exposure
+
+```{r chronic clay}
+#models including all recordings
+chron_mean_speed <- glmmTMB(mean_speed ~ treatment*sex + (1|tankID),
+                       data = chronic_clay, family = gaussian())
+chron_var_speed <- update(chron_mean_speed, speed_variance ~ .)
+chron_activratio <- update(chron_mean_speed, activity_ratio ~ .)
+chron_tot_dist <- update(chron_mean_speed, totaldist_cm ~ .)
+chron_max_speed <- update(chron_mean_speed, max_speed ~ .)
+chron_max_accel <- update(chron_mean_speed, max_acceleration ~ .)
+
+#checking model assumptions
+plot(simulateResiduals(fittedModel = chron_mean_speed))
+plot(simulateResiduals(fittedModel = chron_var_speed)) #assumptions not met
+plot(simulateResiduals(fittedModel = chron_activratio))
+plot(simulateResiduals(fittedModel = chron_tot_dist))
+plot(simulateResiduals(fittedModel = chron_max_speed)) #assumptions not met
+plot(simulateResiduals(fittedModel = chron_max_accel))
+
+#transforming the data to meet model assumptions
+chronic_trans <- chronic_clay
+chronic_trans$speed_variance <- log(chronic_trans$speed_variance+1)
+chronic_trans$max_speed <- log(chronic_trans$max_speed+1)
+
+#the transformed models
+chrolog_var_speed <- update(chron_var_speed, data = chronic_trans)
+chrolog_max_speed <- update(chron_max_speed, data = chronic_trans)
+
+#checking the transformed model assumptions
+plot(simulateResiduals(fittedModel = chrolog_var_speed))
+plot(simulateResiduals(fittedModel = chrolog_max_speed))
+
+#analyzing the results
+Anova(chron_mean_speed)
+Anova(chrolog_var_speed)
+Anova(chron_activratio)
+Anova(chron_tot_dist)
+Anova(chrolog_max_speed)
+Anova(chron_max_accel)
+
+#post hoc pairwise comparison of the significant results
+chrolog_var_speed %>% emmeans(pairwise ~ treatment)
+```
+
+
+## Direct Comparisons
+
+```{r direct}
+#sub-setting the data to only include recording 4
+direct_claydye <- clay_dye %>%
+                  filter(recording == "rec4")
+direct_dyedye <- dye_dye %>%
+                filter(recording == "rec4")
+
+
+#the clay vs dye models
+
+#mean speed
+d_claydye_speed <- lm(mean_speed ~ treatment*experiment, data = direct_claydye)
+#maximum speed
+d_claydye_maxsp <- update(d_claydye_speed, max_speed ~ .)
+#activity ratio
+d_claydye_activ <- update(d_claydye_speed, activity_ratio ~ .)
+#maximum acceleration
+d_claydye_accel <- update(d_claydye_speed, max_acceleration ~ .)
+#total distance traveled
+d_claydye_dist <- update(d_claydye_speed, totaldist_cm ~ .)
+
+#checking the model assumptions
+plot(d_claydye_speed)
+plot(d_claydye_maxsp)
+plot(d_claydye_activ) #assumptions not met
+plot(d_claydye_accel)
+plot(d_claydye_dist)
+
+#using an alternative regression family to meet model assumptions
+beta_d_claydye_activ <- glmmTMB(activity_ratio ~ treatment*experiment,
+                                 data = direct_claydye, family = ordbeta(
+                                                               link = "logit"))
+
+#checking the assumptions of the GLM
+plot(simulateResiduals(fittedModel = beta_d_claydye_activ))
+
+#analyzing the results
+Anova(d_claydye_speed)
+Anova(d_claydye_maxsp)
+Anova(beta_d_claydye_activ)
+Anova(d_claydye_accel)
+Anova(d_claydye_dist)
+
+#post hoc pairwise comparisons of significant results
+d_claydye_speed %>% emmeans(pairwise ~ treatment)
+d_claydye_maxsp %>% emmeans(pairwise ~ treatment)
+d_claydye_dist %>% emmeans(pairwise ~ treatment)
+
+
+#the stirred vs unstirred dye models
+
+#mean speed
+d_dyedye_speed <- lm(mean_speed ~ treatment*experiment, data = direct_dyedye)
+#maximum speed
+d_dyedye_maxsp <- update(d_dyedye_speed, max_speed ~ .)
+#activity ratio
+d_dyedye_activ <- update(d_dyedye_speed, activity_ratio ~ .)
+#maximum acceleration
+d_dyedye_accel <- update(d_dyedye_speed, max_acceleration ~ .)
+#total distance traveled
+d_dyedye_dist <- update(d_dyedye_speed, totaldist_cm ~ .)
+
+#checking the model assumptions
+plot(d_dyedye_speed)
+plot(d_dyedye_maxsp)
+plot(d_dyedye_activ) #assumptions not met
+plot(d_dyedye_accel)
+plot(d_dyedye_dist)
+
+#using an alternative regression family to meet model assumptions for activity
+beta_d_dyedye_activ <- glmmTMB(activity_ratio ~ treatment*experiment,
+                                 data = direct_dyedye, family = ordbeta(
+                                                               link = "logit"))
+
+#checking the assumptions of the GLM
+plot(simulateResiduals(fittedModel = beta_d_dyedye_activ))
+
+#analyzing the models
+Anova(d_dyedye_speed)
+Anova(d_dyedye_maxsp)
+Anova(beta_d_dyedye_activ)
+Anova(d_dyedye_accel)
+Anova(d_dyedye_dist)
+
+#post hoc pairwise comparisons of the significant result
+d_dyedye_speed %>% emmeans(pairwise ~ treatment)
+```
