@@ -162,3 +162,154 @@ Anova(d_dyedye_dist)
 #post hoc pairwise comparisons of the significant result
 d_dyedye_speed %>% emmeans(pairwise ~ treatment)
 ```
+
+
+## Full Comparisons
+
+```{r full}
+#averaging together the two morning recordings for each measure and for each
+#experiment by comparison (clay/dye, dye stirred/dye unstirred)
+morn_claydye <- clay_dye %>%
+                filter(recording %in% c("rec1", "rec3")) %>%
+                select(-recording) %>%
+                group_by(shoalID, treatment, experiment) %>%
+                summarize(mean_speed = mean(mean_speed),
+                          max_speed = mean(max_speed),
+                          activity_ratio = mean(activity_ratio),
+                          max_acceleration = mean(max_acceleration),
+                          totaldist_cm = mean(totaldist_cm))
+morn_dyedye <- dye_dye %>%
+               filter(recording %in% c("rec1", "rec3")) %>%
+               select(-recording) %>%
+               group_by(shoalID, treatment, experiment) %>%
+               summarize(mean_speed = mean(mean_speed),
+                         max_speed = mean(max_speed),
+                         activity_ratio = mean(activity_ratio),
+                         max_acceleration = mean(max_acceleration),
+                         totaldist_cm = mean(totaldist_cm))
+#labeling these values as the morning values
+morn_claydye$time <- "morning"
+morn_dyedye$time <- "morning"
+#averaging together the afternoon values
+afte_claydye <- clay_dye %>%
+                filter(recording %in% c("rec2", "rec4")) %>%
+                select(-recording) %>%
+                group_by(shoalID, treatment, experiment) %>%
+                summarize(mean_speed = mean(mean_speed),
+                          max_speed = mean(max_speed),
+                          activity_ratio = mean(activity_ratio),
+                          max_acceleration = mean(max_acceleration),
+                          totaldist_cm = mean(totaldist_cm))
+afte_dyedye <- dye_dye %>%
+               filter(recording %in% c("rec2", "rec4")) %>%
+               select(-recording) %>%
+               group_by(shoalID, treatment, experiment) %>%
+               summarize(mean_speed = mean(mean_speed),
+                         max_speed = mean(max_speed),
+                         activity_ratio = mean(activity_ratio),
+                         max_acceleration = mean(max_acceleration),
+                         totaldist_cm = mean(totaldist_cm))
+#labeling these values as the afternoon values
+afte_claydye$time <- "afternoon"
+afte_dyedye$time <- "afternoon"
+#combining the averaged morning and afternoon values into a single dataframe
+#for each two-experiment comparison
+full_claydye <- rbind(morn_claydye, afte_claydye)
+full_dyedye <- rbind(morn_dyedye, afte_dyedye)
+
+
+#the clay vs dye models
+
+#mean speed
+claydye_speed <- glmmTMB(mean_speed ~ treatment*experiment*time + (1|shoalID),
+                         data = full_claydye)
+#maximum speed
+claydye_maxsp <- update(claydye_speed, max_speed ~ .)
+#activity ratio
+claydye_activ <- update(claydye_speed, activity_ratio ~ .)
+#maximum acceleration
+claydye_accel <- update(claydye_speed, max_acceleration ~ .)
+#total distance traveled
+claydye_dist <- update(claydye_speed, totaldist_cm ~ .)
+
+#testing model assumptions
+plot(simulateResiduals(fittedModel = claydye_speed))
+plot(simulateResiduals(fittedModel = claydye_maxsp))
+plot(simulateResiduals(fittedModel = claydye_activ)) #assumptions not met
+plot(simulateResiduals(fittedModel = claydye_accel))
+plot(simulateResiduals(fittedModel = claydye_dist))
+
+#using an alternative regression family to meet model assumptions
+beta_claydye_activ <- update(claydye_activ, . ~ ., family = ordbeta(link =
+                                                                    "logit"))
+
+#checking the assumptions of the GLM
+plot(simulateResiduals(fittedModel = beta_claydye_activ))
+
+#analyzing the models
+Anova(claydye_speed)
+Anova(claydye_maxsp)
+Anova(beta_claydye_activ)
+Anova(claydye_accel)
+Anova(claydye_dist)
+
+#post hoc pairwise comparisons of the significant results
+claydye_speed %>% emmeans(pairwise ~ treatment:time)
+claydye_speed %>% emmeans(pairwise ~ treatment:experiment:time)
+claydye_maxsp %>% emmeans(pairwise ~ treatment:time)
+claydye_dist %>% emmeans(pairwise ~ treatment:time)
+claydye_dist %>% emmeans(pairwise ~ treatment:experiment:time)
+
+
+#the stirred vs unstirred dye models
+
+#mean speed
+dyedye_speed <- glmmTMB(mean_speed ~ treatment*experiment*time + (1|shoalID),
+                         data = full_dyedye)
+#maximum speed
+dyedye_maxsp <- update(dyedye_speed, max_speed ~ .)
+#activity ratio
+dyedye_activ <- update(dyedye_speed, activity_ratio ~ .)
+#maximum acceleration
+dyedye_accel <- update(dyedye_speed, max_acceleration ~ .)
+#total distance traveled
+dyedye_dist <- update(dyedye_speed, totaldist_cm ~ .)
+
+#testing model assumptions
+plot(simulateResiduals(fittedModel = dyedye_speed))
+plot(simulateResiduals(fittedModel = dyedye_maxsp)) #assumptions not met
+plot(simulateResiduals(fittedModel = dyedye_activ)) #assumptions not met
+plot(simulateResiduals(fittedModel = dyedye_accel))
+plot(simulateResiduals(fittedModel = dyedye_dist))
+
+#transforming the data to meet model assumptions
+trans_full_dye <- full_dyedye
+trans_full_dye$max_speed <- log(trans_full_dye$max_speed)
+
+#the transformed model
+trans_dyedye_maxsp <- update(dyedye_maxsp, . ~ ., data = trans_full_dye)
+
+#checking the transformed model assumptions
+plot(simulateResiduals(fittedModel = trans_dyedye_maxsp))
+
+#using an alternative regression family to meet model assumptions
+beta_dyedye_activ <- update(dyedye_activ, . ~ ., family = ordbeta(link =
+                                                                  "logit"))
+
+#checking the assumptions of the GLM
+plot(simulateResiduals(fittedModel = beta_dyedye_activ))
+
+#analyzing the models
+Anova(dyedye_speed)
+Anova(trans_dyedye_maxsp)
+Anova(beta_dyedye_activ)
+Anova(dyedye_accel)
+Anova(dyedye_dist)
+
+#post hoc pairwise comparisons of the significant results
+dyedye_speed %>% emmeans(pairwise ~ treatment)
+dyedye_speed %>% emmeans(pairwise ~ treatment:time)
+beta_claydye_activ %>% emmeans(pairwise ~ treatment)
+dyedye_dist %>% emmeans(pairwise ~ treatment)
+dyedye_dist %>% emmeans(pairwise ~ treatment:time)
+```
