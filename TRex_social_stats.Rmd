@@ -47,7 +47,6 @@ library(glmmTMB)
 library(emmeans)
 library(car)
 library(DHARMa)
-library(data.table)
 
 #importing the data
 #chronic_clay <- read_csv("2week_clay_social_data.csv")
@@ -275,66 +274,44 @@ full_dyedye <- rbind(morn_dyedye, afte_dyedye)
 #the clay vs dye models
 
 #mean shoal area
-claydye_shoal <- lm(shoal_area ~ treatment*experiment*time, data = full_claydye)
+claydye_shoal <- glmmTMB(shoal_area ~ treatment*experiment*time + (1|shoalID),
+                         data = full_claydye)
 #mean neighbor distance
 claydye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
 #polarity
 claydye_pol <- update(claydye_shoal, polarity ~ .)
 
 #checking the model assumptions
-plot(claydye_shoal) #assumptions not met
-plot(claydye_neigh)
-plot(claydye_pol)
-
-#transforming the data to meet model assumptions
-trans_full_claydye <- full_claydye
-trans_full_claydye$shoal_area <- log(trans_full_claydye$shoal_area)
-
-#the transformed model
-trans_claydye_shoal <- update(claydye_shoal, . ~ ., data = trans_full_claydye)
-
-#checking the transformed model assumptions
-plot(trans_claydye_shoal)
+plot(simulateResiduals(fittedModel = claydye_shoal))
+plot(simulateResiduals(fittedModel = claydye_neigh))
+plot(simulateResiduals(fittedModel = claydye_pol))
 
 #analyzing the models
-Anova(trans_claydye_shoal)
+Anova(claydye_shoal)
 Anova(claydye_neigh)
 Anova(claydye_pol)
 
 #post hoc pairwise comparisons of the significant results
-trans_claydye_shoal %>% emmeans(pairwise ~ treatment:experiment)
-claydye_pol %>% emmeans(pairwise ~ treatment:experiment)
+claydye_shoal %>% emmeans(pairwise ~ treatment:time)
 
 
 #the stirred vs unstirred dye models
 
 #mean shoal area
-dyedye_shoal <- lm(shoal_area ~ treatment*experiment*time, data = full_dyedye)
+dyedye_shoal <- glmmTMB(shoal_area ~ treatment*experiment*time + (1|shoalID),
+                        data = full_dyedye)
 #mean neighbor distance
 dyedye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
 #polarity
 dyedye_pol <- update(claydye_shoal, polarity ~ .)
 
 #checking the model assumptions
-plot(dyedye_shoal) #assumptions not met
-plot(dyedye_neigh)
-plot(dyedye_pol)
-
-#transforming the data to meet model assumptions
-trans_full_dyedye <- full_dyedye
-trans_full_dyedye$shoal_area <- log(trans_full_dyedye$shoal_area)
-
-#the transformed model
-trans_dyedye_shoal <- update(dyedye_shoal, . ~ ., data = trans_full_dyedye)
-
-#checking the transformed model assumptions
-plot(trans_dyedye_shoal)
+plot(simulateResiduals(fittedModel = dyedye_shoal))
+plot(simulateResiduals(fittedModel = dyedye_neigh))
+plot(simulateResiduals(fittedModel = dyedye_pol))
 
 #analyzing the models
-Anova(trans_dyedye_shoal)
+Anova(dyedye_shoal)
 Anova(dyedye_neigh)
 Anova(dyedye_pol)
-
-#post hoc pairwise comparisons of the significant result
-trans_d_claydye_shoal %>% emmeans(pairwise ~ treatment)
 ```
