@@ -36,10 +36,10 @@ nostir_grace <- dplyr::filter(dye_grace, grepl("NO", `Media file`))
 longclay_isabella <- longclay_isabella[,c(6:9,12)]
 longclay_izma <- longclay_izma[,c(7:8,11,14,17)]
 shortclay_grace <- shortclay_grace[,c(7:8,10,13,16)]
-shortclay_sana <- shortclay_sana[,c(7:8,10,13,16)]
-dyestir_ryan <- dyestir_ryan[,c(7:8,11,14,17)]
+shortclay_sana <- shortclay_sana[,c(7:8,11,14,17)]
+dyestir_ryan <- dyestir_ryan[,c(9:10,14,16,19)]
 dyestir_grace <- dyestir_grace[,c(7:8,10,13,16)]
-nostir_ryan <- nostir_ryan[,c(7:8,11,14,17)]
+nostir_ryan <- nostir_ryan[,c(9:10,14,16,19)]
 nostir_grace <- nostir_grace[,c(7:8,10,13,16)]
 
 #changing column names to be universal for all experiments
@@ -53,10 +53,6 @@ colnames(dyestir_ryan) <- sharecol
 colnames(nostir_grace) <- sharecol
 colnames(nostir_ryan) <- sharecol
 
-#Ryan's stirred dye file is missing the tankID and recording number for the
-#tank 7-3, recording 3 video
-dyestir_ryan$tankID[is.na(dyestir_ryan$tankID)] <- "7-3"
-dyestir_ryan$recording[is.na(dyestir_ryan$recording)] <- 3
 #Ryan also used two different behavior names than the others, consolidating
 dyestir_ryan$behavior[dyestir_ryan$behavior == "chase"] <- "chasing"
 dyestir_ryan$behavior[dyestir_ryan$behavior == "agg"] <- "agg_contact"
@@ -71,12 +67,6 @@ for (i in 1:datlength) {
   str_hold <- strsplit(longclay_isabella$tankID[i], split = "/")
   longclay_isabella$tankID[i] <- paste(str_hold[[1]][1], str_hold[[1]][2],
                                        sep = "-")
-}
-datlength <- length(shortclay_sana$tankID)
-for (k in 1:datlength) {
-  str_hold <- strsplit(shortclay_sana$tankID[k], split = "/")
-  shortclay_sana$tankID[k] <- paste(str_hold[[1]][1], str_hold[[1]][2],
-                                    sep = "-")
 }
 
 #combining the files from different scorers for their shared experiments
