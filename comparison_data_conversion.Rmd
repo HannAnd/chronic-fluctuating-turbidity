@@ -24,8 +24,6 @@ clay_data[[1]] <- read_csv("acute_clay_movement_data.csv")
 clay_data[[2]] <- read_csv("acute_clay_social_data.csv")
 #BORIS behavior scores by behavior
 clay_data[[3]] <- read_csv("acute_clay_BORIS_all.csv")
-#BORIS behavior scores, aggregated
-clay_data[[4]] <- read_csv("acute_clay_BORIS_agg.csv")
 #adding treatment columns to the movement data
 clay_flux <- c("tank7-3", "tank3-1", "tank6-1", "tank6-2", "tank4-1", "tank2-1",
                "tank7-2", "tank8-2")
@@ -37,15 +35,13 @@ clay_data[[1]]$treatment <- clay_data[[1]]$tankID %>%
                             fct_collapse(flux = clay_flux,
                                          stable = clay_stable,
                                          clear = clay_clear)
-#reordering the columns of the aggregated BORIS data to be consistent with dye
-clay_data[[4]] <- clay_data[[4]] %>%
-                  select(tankID, recording, behavior, duration_s, behav_count,
-                         treatment)
+#relabeling the "mean" condition values to "stable" for consistency
+clay_data[[2]]$treatment <- dplyr::recode(clay_data[[2]]$treatment,
+                                          mean = "stable")
 #changing tank IDs to shoal IDs to ensure IDs are different between experiments
 clay_data[[1]]$tankID <- gsub("tank", "clay", clay_data[[1]]$tankID)
 clay_data[[2]]$tankID <- gsub("tank", "clay", clay_data[[2]]$tankID)
 clay_data[[3]]$tankID <- paste0("clay", clay_data[[3]]$tankID)
-clay_data[[4]]$tankID <- paste0("clay", clay_data[[4]]$tankID)
 
 
 #importing the stirred dye experiment data
@@ -53,7 +49,6 @@ stir_data <- list()
 stir_data[[1]] <- read_csv("stir_dye_movement_data.csv")
 stir_data[[2]] <- read_csv("stir_dye_social_data.csv")
 stir_data[[3]] <- read_csv("stir_dye_BORIS_all.csv")
-stir_data[[4]] <- read_csv("stir_dye_BORIS_agg.csv")
 #adding treatment columns to the movement data
 stir_flux <- c("tank1-2", "tank3-3", "tank2-1", "tank4-3", "tank5-1", "tank6-1",
                "tank5-2", "tank3-1")
@@ -72,7 +67,6 @@ stir_data[[2]]$treatment <- dplyr::recode(stir_data[[2]]$treatment,
 stir_data[[1]]$tankID <- gsub("tank", "stir", stir_data[[1]]$tankID)
 stir_data[[2]]$tankID <- gsub("tank", "stir", stir_data[[2]]$tankID)
 stir_data[[3]]$tankID <- paste0("stir", stir_data[[3]]$tankID)
-stir_data[[4]]$tankID <- paste0("stir", stir_data[[4]]$tankID)
 
 
 #importing the unstirred dye experiment data
@@ -80,7 +74,6 @@ nostir_data <- list()
 nostir_data[[1]] <- read_csv("nostir_dye_movement_data.csv")
 nostir_data[[2]] <- read_csv("nostir_dye_social_data.csv")
 nostir_data[[3]] <- read_csv("nostir_dye_BORIS_all.csv")
-nostir_data[[4]] <- read_csv("nostir_dye_BORIS_agg.csv")
 #adding the treatment column to the movement data
 nostir_flux <- c("tank8-2", "tank5-1", "tank3-2", "tank1-1", "tank6-1",
                  "tank4-3", "tank6-3", "tank1-2")
@@ -95,20 +88,14 @@ nostir_data[[1]]$treatment <- nostir_data[[1]]$tankID %>%
 #relabeling the "control" condition values to "clear" for consistency
 nostir_data[[2]]$treatment <- dplyr::recode(nostir_data[[2]]$treatment,
                                             control = "clear")
-#reordering the columns of the aggregated BORIS data to be consistent with the
-#other dye experiment
-nostir_data[[4]] <- nostir_data[[4]] %>%
-                  select(tankID, recording, behavior, duration_s, behav_count,
-                         treatment)
 #changing tank IDs to shoal IDs to ensure IDs are different between experiments
 nostir_data[[1]]$tankID <- gsub("tank", "nostir", nostir_data[[1]]$tankID)
 nostir_data[[2]]$tankID <- gsub("tank", "nostir", nostir_data[[2]]$tankID)
 nostir_data[[3]]$tankID <- paste0("nostir", nostir_data[[3]]$tankID)
-nostir_data[[4]]$tankID <- paste0("nostir", nostir_data[[4]]$tankID)
 
 
 #labeling each dataframe with its specific experiment
-for (i in 1:4) {
+for (i in 1:3) {
   clay_data[[i]]$experiment <- "clay"
   stir_data[[i]]$experiment <- "stir_dye"
   nostir_data[[i]]$experiment <- "nostir_dye"
@@ -117,13 +104,13 @@ for (i in 1:4) {
 #combining the dataframes for the respective experimental comparisons
 claydye_data <- list()
 dyedye_data <- list()
-for (n in 1:4) {
+for (n in 1:3) {
   claydye_data[[n]] <- rbind(clay_data[[n]], stir_data[[n]])
   dyedye_data[[n]] <- rbind(stir_data[[n]], nostir_data[[n]])
 }
 
 #renaming the tankID column to be more accurate
-for (s in 1:4) {
+for (s in 1:3) {
   claydye_data[[s]] <- claydye_data[[s]] %>%
                        rename_at("tankID", ~"shoalID")
   dyedye_data[[s]] <- dyedye_data[[s]] %>%
@@ -140,11 +127,9 @@ scripts.
 ```{r write}
 write_csv(claydye_data[[1]], "comparison_clay_dye_movement_data.csv")
 write_csv(claydye_data[[2]], "comparison_clay_dye_social_data.csv")
-write_csv(claydye_data[[3]], "comparison_clay_dye_BORIS_all_data.csv")
-write_csv(claydye_data[[1]], "comparison_clay_dye_BORIS_agg_data.csv")
+write_csv(claydye_data[[3]], "comparison_clay_dye_BORIS_data.csv")
 
 write_csv(dyedye_data[[1]], "comparison_dye_dye_movement_data.csv")
 write_csv(dyedye_data[[2]], "comparison_dye_dye_social_data.csv")
-write_csv(dyedye_data[[3]], "comparison_dye_dye_BORIS_all_data.csv")
-write_csv(dyedye_data[[1]], "comparison_dye_dye_BORIS_agg_data.csv")
+write_csv(dyedye_data[[3]], "comparison_dye_dye_BORIS_data.csv")
 ```
