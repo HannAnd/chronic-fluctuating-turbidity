@@ -595,7 +595,7 @@ c_dirnum_cont <- claydye_boris_all %>%
                  scale_fill_manual(values = 
                                 c("slategray1", "snow", "wheat1",
                                   "snow3", "wheat4", "snow4")) +
-                 ylim(0,215) +
+                 ylim(0,90) +
                  theme_classic()
 #number of chases
 c_dirnum_chase <- claydye_boris_all %>%
@@ -612,7 +612,7 @@ c_dirnum_chase <- claydye_boris_all %>%
                   scale_fill_manual(values = 
                                  c("slategray1", "snow", "wheat1",
                                    "snow3", "wheat4", "snow4")) +
-                  ylim(0,155) +
+                  ylim(0,130) +
                   theme_classic()
 #number of lateral displays
 c_dirnum_lat <- claydye_boris_all %>%
@@ -629,7 +629,7 @@ c_dirnum_lat <- claydye_boris_all %>%
                 scale_fill_manual(values = 
                                   c("slategray1", "snow", "wheat1",
                                     "snow3", "wheat4", "snow4")) +
-                ylim(0,25) +
+                ylim(0,23) +
                 theme_classic()
 #number of follows
 c_dirnum_foll <- claydye_boris_all %>%
@@ -646,7 +646,7 @@ c_dirnum_foll <- claydye_boris_all %>%
                  scale_fill_manual(values = 
                                 c("slategray1", "snow", "wheat1",
                                   "snow3", "wheat4", "snow4")) +
-                 ylim(0,85) +
+                 ylim(0,45) +
                  theme_classic()
 
 
@@ -666,7 +666,7 @@ d_dirnum_cont <- dyedye_boris_all %>%
                  scale_fill_manual(values = c("honeydew", "snow",
                                               "honeydew3", "snow3",
                                               "honeydew4", "snow4")) +
-                 ylim(0,215) +
+                 ylim(0,90) +
                  theme_classic()
 #number of chases
 d_dirnum_chase <- dyedye_boris_all %>%
@@ -700,7 +700,7 @@ d_dirnum_lat <- dyedye_boris_all %>%
                 scale_fill_manual(values = c("honeydew", "snow",
                                              "honeydew3", "snow3",
                                              "honeydew4", "snow4")) +
-                ylim(0,35) +
+                ylim(0,23) +
                 theme_classic()
 #number of follows
 d_dirnum_foll <- dyedye_boris_all %>%
@@ -717,7 +717,7 @@ d_dirnum_foll <- dyedye_boris_all %>%
                  scale_fill_manual(values = c("honeydew", "snow",
                                               "honeydew3", "snow3",
                                               "honeydew4", "snow4")) +
-                 ylim(0,180) +
+                 ylim(0,45) +
                  theme_classic()
 ```
 
@@ -742,7 +742,7 @@ c_dirsec_chase <- claydye_boris_all %>%
                   scale_fill_manual(values = 
                                  c("slategray1", "snow", "wheat1",
                                    "snow3", "wheat4", "snow4")) +
-                  ylim(0,7) +
+                  ylim(0,3) +
                   theme_classic()
 #mean duration of lateral displays
 c_dirsec_lat <- claydye_boris_all %>%
@@ -760,9 +760,9 @@ c_dirsec_lat <- claydye_boris_all %>%
                 scale_fill_manual(values = 
                                   c("slategray1", "snow", "wheat1",
                                     "snow3", "wheat4", "snow4")) +
-                ylim(0,5) +
+                ylim(0,4) +
                 theme_classic()
-#mean duration of Follows
+#mean duration of follows
 c_dirsec_foll <- claydye_boris_all %>%
                  filter(recording == 4) %>%
                  filter(behavior == "following") %>%
@@ -778,7 +778,7 @@ c_dirsec_foll <- claydye_boris_all %>%
                  scale_fill_manual(values = 
                                 c("slategray1", "snow", "wheat1",
                                   "snow3", "wheat4", "snow4")) +
-                 ylim(0,7) +
+                 ylim(0,8.8) +
                  theme_classic()
 
 
@@ -817,7 +817,7 @@ d_dirsec_lat <- dyedye_boris_all %>%
                 scale_fill_manual(values = c("honeydew", "snow",
                                              "honeydew3", "snow3",
                                              "honeydew4", "snow4")) +
-                ylim(0,6.8) +
+                ylim(0,4) +
                 theme_classic()
 #mean duration of Follows
 d_dirsec_foll <- dyedye_boris_all %>%
@@ -835,7 +835,7 @@ d_dirsec_foll <- dyedye_boris_all %>%
                  scale_fill_manual(values = c("honeydew", "snow",
                                               "honeydew3", "snow3",
                                               "honeydew4", "snow4")) +
-                 ylim(0,9) +
+                 ylim(0,8.8) +
                  theme_classic()
 ```
 
@@ -864,11 +864,11 @@ c_fullnum_cont <- claydye_boris_all %>%
                                                 sep = ":"))) +
                   geom_boxplot() +
                   labs(fill = "Experiment:Treatment") +
-                  xlab("Treatments") + ylab("Number of Aggressive Contacts") +
+                  xlab("Visibility") + ylab("Number of Aggressive Contacts") +
                   scale_fill_manual(values = 
                                     c("slategray1", "snow", "wheat1",
                                       "snow3", "wheat4", "snow4")) +
-                  ylim(0,180) +
+                  ylim(0,140) +
                   theme_classic()
 #number of chases
 c_fullnum_chase <- claydye_boris_all %>%
@@ -880,7 +880,7 @@ c_fullnum_chase <- claydye_boris_all %>%
                                                  sep = ":"))) +
                    geom_boxplot() +
                    labs(fill = "Experiment:Treatment") +
-                   xlab("Treatments") + ylab("Number of Chases") +
+                   xlab("Visibility") + ylab("Number of Chases") +
                    scale_fill_manual(values = 
                                      c("slategray1", "snow", "wheat1",
                                        "snow3", "wheat4", "snow4")) +
@@ -896,11 +896,11 @@ c_fullnum_lat <- claydye_boris_all %>%
                                                sep = ":"))) +
                  geom_boxplot() +
                  labs(fill = "Experiment:Treatment") +
-                 xlab("Treatments") + ylab("Number of Lateral Displays") +
+                 xlab("Visibility") + ylab("Number of Lateral Displays") +
                  scale_fill_manual(values = 
                                    c("slategray1", "snow", "wheat1",
                                      "snow3", "wheat4", "snow4")) +
-                 ylim(0,25) + 
+                 ylim(0,35) + 
                  theme_classic()
 #number of follows
 c_fullnum_foll <- claydye_boris_all %>%
@@ -912,7 +912,7 @@ c_fullnum_foll <- claydye_boris_all %>%
                                                 sep = ":"))) +
                   geom_boxplot() +
                   labs(fill = "Experiment:Treatment") +
-                  xlab("Treatments") + ylab("Number of Aggressive Contacts") +
+                  xlab("Visibility") + ylab("Number of Aggressive Contacts") +
                   scale_fill_manual(values = 
                                     c("slategray1", "snow", "wheat1",
                                       "snow3", "wheat4", "snow4")) +
@@ -931,11 +931,11 @@ d_fullnum_cont <- dyedye_boris_all %>%
                                                 sep = ":"))) +
                   geom_boxplot() +
                   labs(fill = "Experiment:Treatment") +
-                  xlab("Treatments") + ylab("Number of Aggressive Contacts") +
+                  xlab("Visibility") + ylab("Number of Aggressive Contacts") +
                   scale_fill_manual(values = c("honeydew", "snow",
                                                "honeydew3", "snow3",
                                                "honeydew4", "snow4")) +
-                  ylim(0,215) +
+                  ylim(0,140) +
                   theme_classic()
 #number of chases
 d_fullnum_chase <- dyedye_boris_all %>%
@@ -947,11 +947,11 @@ d_fullnum_chase <- dyedye_boris_all %>%
                                                  sep = ":"))) +
                    geom_boxplot() +
                    labs(fill = "Experiment:Treatment") +
-                   xlab("Treatments") + ylab("Number of Chases") +
+                   xlab("Visibility") + ylab("Number of Chases") +
                    scale_fill_manual(values = c("honeydew", "snow",
                                                 "honeydew3", "snow3",
                                                 "honeydew4", "snow4")) +
-                   ylim(0,130) +
+                   ylim(0,155) +
                    theme_classic()
 #number of lateral displays
 d_fullnum_lat <- dyedye_boris_all %>%
@@ -963,7 +963,7 @@ d_fullnum_lat <- dyedye_boris_all %>%
                                                sep = ":"))) +
                  geom_boxplot() +
                  labs(fill = "Experiment:Treatment") +
-                 xlab("Treatments") + ylab("Number of Lateral Displays") +
+                 xlab("Visibility") + ylab("Number of Lateral Displays") +
                  scale_fill_manual(values = c("honeydew", "snow",
                                               "honeydew3", "snow3",
                                               "honeydew4", "snow4")) +
@@ -971,7 +971,6 @@ d_fullnum_lat <- dyedye_boris_all %>%
                  theme_classic()
 #number of follows
 d_fullnum_foll <- dyedye_boris_all %>%
-                  filter(recording == 4) %>%
                   filter(behavior == "following") %>%
                   mutate(treatment = fct_relevel(treatment,
                                                  "clear", "stable", "flux")) %>%
@@ -980,11 +979,11 @@ d_fullnum_foll <- dyedye_boris_all %>%
                                                 sep = ":"))) +
                   geom_boxplot() +
                   labs(fill = "Experiment:Treatment") +
-                  xlab("Treatments") + ylab("Number of Aggressive Contacts") +
+                  xlab("Visibility") + ylab("Number of Aggressive Contacts") +
                   scale_fill_manual(values = c("honeydew", "snow",
                                                "honeydew3", "snow3",
                                                "honeydew4", "snow4")) +
-                  ylim(0,180) +
+                  ylim(0,85) +
                   theme_classic()
 ```
 
@@ -1019,7 +1018,7 @@ c_fullsec_chase <- claydye_boris_all %>%
                    scale_fill_manual(values = 
                                      c("slategray1", "snow", "wheat1",
                                        "snow3", "wheat4", "snow4")) +
-                   ylim(0,7) +
+                   ylim(0,6.8) +
                    theme_classic()
 #mean duration of lateral displays
 c_fullsec_lat <- claydye_boris_all %>%
@@ -1036,7 +1035,7 @@ c_fullsec_lat <- claydye_boris_all %>%
                   scale_fill_manual(values = 
                                     c("slategray1", "snow", "wheat1",
                                       "snow3", "wheat4", "snow4")) +
-                 ylim(0,5) +
+                 ylim(0,7) +
                  theme_classic()
 #mean duration of Follows
 c_fullsec_foll <- claydye_boris_all %>%
@@ -1053,7 +1052,7 @@ c_fullsec_foll <- claydye_boris_all %>%
                   scale_fill_manual(values = 
                                     c("slategray1", "snow", "wheat1",
                                       "snow3", "wheat4", "snow4")) +
-                  ylim(0,7) +
+                  ylim(0,8.8) +
                   theme_classic()
 
 
@@ -1073,7 +1072,7 @@ d_fullsec_chase <- dyedye_boris_all %>%
                    scale_fill_manual(values = c("honeydew", "snow",
                                                 "honeydew3", "snow3",
                                                 "honeydew4", "snow4")) +
-                   ylim(0,3) +
+                   ylim(0,6.8) +
                    theme_classic()
 #mean duration of lateral displays
 d_fullsec_lat <- dyedye_boris_all %>%
@@ -1090,7 +1089,7 @@ d_fullsec_lat <- dyedye_boris_all %>%
                  scale_fill_manual(values = c("honeydew", "snow",
                                               "honeydew3", "snow3",
                                               "honeydew4", "snow4")) +
-                 ylim(0,6.8) +
+                 ylim(0,7) +
                  theme_classic()
 #mean duration of follows
 d_fullsec_foll <- dyedye_boris_all %>%
@@ -1107,6 +1106,6 @@ d_fullsec_foll <- dyedye_boris_all %>%
                   scale_fill_manual(values = c("honeydew", "snow",
                                                "honeydew3", "snow3",
                                                "honeydew4", "snow4")) +
-                  ylim(0,9) +
+                  ylim(0,8.8) +
                   theme_classic()
 ```
