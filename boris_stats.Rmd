@@ -44,39 +44,24 @@ library(car)
 library(DHARMa)
 library(performance)
 
-#importing the data
+#importing the base data
 chron_clay <- read_csv("chronic_clay_BORIS_all.csv")
-acute_clay <- read_csv("acute_clay_BORIS_all.csv")
-stir_dye <- read_csv("stir_dye_BORIS_all.csv")
-nostir_dye <- read_csv("nostir_dye_BORIS_all.csv")
+clay_dye_all <- read_csv("comparison_clay_dye_BORIS_all_data.csv")
+dye_dye_all <- read_csv("comparison_clay_dye_BORIS_all_data.csv")
 #also importing the aggregated behavioral data
 chron_agg <- read_csv("chronic_clay_BORIS_agg.csv")
-acute_agg <- read_csv("acute_clay_BORIS_agg.csv")
-stir_agg <- read_csv("stir_dye_BORIS_agg.csv")
-nostir_agg <- read_csv("nostir_dye_BORIS_agg.csv")
+clay_dye_agg <- read_csv("comparison_clay_dye_BORIS_agg_data.csv")
+dye_dye_agg <- read_csv("comparison_clay_dye_BORIS_agg_data.csv")
+
+#re-classifying the recording variable as a character for use in the filter()
+#function
+clay_dye_all$recording <- as.character(clay_dye_all$recording)
+clay_dye_agg$recording <- as.character(clay_dye_agg$recording)
+dye_dye_all$recording <- as.character(dye_dye_all$recording)
+dye_dye_agg$recording <- as.character(dye_dye_agg$recording)
 
 #a list of the scored behaviors to be used in filtering the data by behavior
 behavs <- c("chasing", "lat_display", "agg_contact", "following")
-
-#subsetting the data by the visibility conditions in the flux condition
-##high visibility
-high_chron <- chron_clay %>%
-              filter(recording %in% c(3, 4, 7, 9))
-high_acute <- acute_clay %>%
-              filter(recording %in% c(2, 4))
-high_stir <- stir_dye %>%
-             filter(recording %in% c(2, 4))
-high_nostir <- nostir_dye %>%
-               filter(recording %in% c(2, 4))
-##low visibility
-low_chron <- chron_clay %>%
-             filter(recording %in% c(1, 2, 5, 8))
-low_acute <- acute_clay %>%
-             filter(recording %in% c(1, 3))
-low_stir <- stir_dye %>%
-            filter(recording %in% c(1, 3))
-low_nostir <- nostir_dye %>%
-              filter(recording %in% c(1, 3))
 ```
 
 
@@ -115,11 +100,9 @@ chron_cont_log$behav_count <- log(chron_cont_log$behav_count+1)
 chron_foll_log <- as.data.frame(chronic_list[[4]])
 chron_foll_log$behav_count <- log(chron_foll_log$behav_count+1)
 
-#the tricky transformation
-test <- as.data.frame(chronic_list[[2]])
-test$behav_count <- sqrt(test$behav_count+1)
-test_mod <- update(chronic_lat_c, . ~ ., data = test)
-plot(simulateResiduals(fittedModel = test_mod))
+#the tricky transformation (still not working)
+test <- update(chronic_lat_c, . ~ ., family = poisson())
+plot(simulateResiduals(fittedModel = test))
 
 #the transformed models
 chrolog_chase_c <- update(chronic_chase_c, . ~ ., data = chron_chase_log)
@@ -340,87 +323,73 @@ Anova(chrologlo_foll_d)
 ```
 
 
-## Analyses for Experiment 2: Acute (Two Day) Clay Exposure
-#  Analyses divided by behavior and including all recordings
+## Direct Comparisons of Count Data
 
-```{r acute clay}
-#filtering the data by behavior in order to model each behavior separately and
-#putting all of them in a list
-acute_list <- list()
-for (i in 1:(length(behavs))){
-  acute_list[[i]] <- acute_clay %>%
-                     filter(behavior == behavs[i])
+```{r direct}
+#sub-setting the data by recording for the direct comparisons and filtering by
+#behavior for the individual behavior models
+direct_claydye <- list()
+for (i in 1:4) {
+  direct_claydye[[i]] <- clay_dye_all %>%
+                         filter(recording == "4") %>%
+                         filter(behavior == behavs[[i]])
 }
+#and also sub-setting by recording for the aggregated behavior models
+direct_claydye[[5]] <- clay_dye_agg %>%
+                       filter(recording == "4") %>%
+                       filter(behavior == "all_aggressive")
+direct_claydye[[6]] <- clay_dye_agg %>%
+                       filter(recording == "4") %>%
+                       filter(behavior == "all")
 
-#models of behavior counts across all recordings
-acute_chase_c <- glmmTMB(behav_count ~ treatment + (1|tankID),
-                       data = acute_list[[1]], family = gaussian())
-acute_lat_c <- update(acute_chase_c, . ~ ., data = acute_list[[2]])
-acute_cont_c <- update(acute_chase_c, . ~ ., data = acute_list[[3]])
-acute_foll_c <- update(acute_chase_c, . ~ ., data = acute_list[[4]])
+
+#the clay vs dye models
+
+#chases
+d_con_cd_chase <- lm(behav_count ~ treatment*experiment, data = direct_claydye[[1]])
+#lateral displays
+d_con_cd_lat <- update(d_con_cd_chase, . ~ ., data = direct_claydye[[2]])
+#aggressive contacts
+d_con_cd_cont <- update(d_con_cd_chase, . ~ ., data = direct_claydye[[3]])
+#follows
+d_con_cd_foll <- update(d_con_cd_cont, . ~ ., data = direct_claydye[[4]])
+#aggregated aggressive behaviors
+d_con_cd_angr <- update(d_con_cd_chase, . ~ ., data = direct_claydye[[5]])
+#all behaviors aggregated
+d_con_cd_all <- update(d_con_cd_chase, . ~ ., data = direct_claydye[[6]])
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = acute_chase_c))
-plot(simulateResiduals(fittedModel = acute_lat_c)) #assumptions not met
-plot(simulateResiduals(fittedModel = acute_cont_c))
-plot(simulateResiduals(fittedModel = acute_foll_c)) #assumptions not met
+plot(d_con_cd_chase) #assumptions not met
+plot(d_con_cd_lat) #assumptions not met
+plot(d_con_cd_cont) #assumptions borderline
+plot(d_con_cd_foll) #assumptions borderline
+plot(d_con_cd_angr) #assumptions borderline
+plot(d_con_cd_all) #assumptions borderline
 
 #transforming the data to meet model assumptions
-acute_lat_log <- as.data.frame(acute_list[[2]])
-acute_lat_log$behav_count <- log(acute_lat_log$behav_count+1)
-acute_foll_log <- as.data.frame(acute_list[[4]])
-acute_foll_log$behave_count <- log(acute_foll_log$behav_count+1)
+direct_cd_trans <- direct_claydye
+for (i in 1:6) {
+  direct_cd_trans[[i]]$behav_count <- log(direct_cd_trans[[i]]$behav_count+1)
+}
 
 #the transformed models
-aculog_lat_c <- update(acute_lat_c, . ~ ., data = acute_lat_log)
-aculog_foll_c <- update(acute_foll_c, . ~ ., data = acute_foll_log)
+d_con_cd_chase_trans <- update(d_con_cd_chase, . ~ .,
+                               data = direct_cd_trans[[1]])
+d_con_cd_lat_trans <- update(d_con_cd_lat, . ~ ., data = direct_cd_trans[[2]])
+d_con_cd_cont_trans <- update(d_con_cd_cont, . ~ .,  data = direct_cd_trans[[3]])
+d_con_cd_foll_trans <- update(d_con_cd_foll, . ~ .,
+                               data = direct_cd_trans[[4]])
+d_con_cd_angr_trans <- update(d_con_cd_angr, . ~ .,
+                              data = direct_cd_trans[[5]])
+d_con_cd_all_trans <- update(d_con_cd_all, . ~ ., data = direct_cd_trans[[6]])
 
 #checking the transformed model assumptions
-plot(simulateResiduals(fittedModel = aculog_lat_c))
-plot(simulateResiduals(fittedModel = aculog_foll_c)) #assumptions not met
-
-#analyzing the results
-Anova(acute_chase_c)
-Anova(aculog_lat_c)
-Anova(acute_cont_c)
-#Anova(acute_foll_c)
-
-
-#models of behavior durations across all relevant recordings
-acute_chase_d <- update(acute_chase_c, duration_s ~ .)
-acute_lat_d <- update(acute_lat_c, duration_s ~ .)
-acute_foll_d <- update(acute_foll_c, duration_s ~ .)
-
-#checking the assumptions
-plot(simulateResiduals(fittedModel = acute_chase_d)) #assumptions not met
-plot(simulateResiduals(fittedModel = acute_lat_d)) #assumptions not met
-plot(simulateResiduals(fittedModel = acute_foll_d)) #assumptions not met
-
-#transforming the data to meet model assumptions
-acute_chase_log <- as.data.frame(acute_list[[1]])
-acute_chase_log$duration_s <- log(acute_chase_log$duration_s)
-acute_lat_log$duration_s <- log(acute_lat_log$duration_s)
-acute_foll_log$duration_s <- log(acute_foll_log$duration_s)
-
-#the transformed models
-aculog_chase_d <- update(acute_chase_d, . ~ ., data = acute_chase_log)
-aculog_lat_d <- update(acute_lat_d, . ~ ., data = acute_lat_log)
-aculog_foll_d <- update(acute_foll_d, . ~ ., data = acute_foll_log)
-
-#checking the transformed model assumptions
-plot(simulateResiduals(fittedModel = aculog_chase_d))
-plot(simulateResiduals(fittedModel = aculog_lat_d))
-plot(simulateResiduals(fittedModel = aculog_foll_d))
-
-#analyzing the results
-Anova(aculog_chase_d)
-Anova(aculog_lat_d)
-Anova(aculog_foll_d)
-
-#post hoc pairwise comparison of the significant results
-aculog_chase_d %>% emmeans(pairwise ~ treatment)
-aculog_lat_d %>% emmeans(pairwise ~ treatment)
-aculog_foll_d %>% emmeans(pairwise ~ treatment)
+plot(d_con_cd_chase_trans) #assumptions worse
+plot(d_con_cd_lat_trans) #assumptions borderline
+plot(d_con_cd_cont_trans) #assumptions worse
+plot(d_con_cd_foll_trans) #assumptions worse
+plot(d_con_cd_angr_trans) #assumptions worse
+plot(d_con_cd_all_trans) #assumptions worse
 ```
 
 
@@ -516,23 +485,13 @@ acutelo_cont_c <- update(acutelo_lat_c, . ~ ., data = acutelo_list[[3]])
 acutelo_foll_c <- update(acutelo_lat_c, . ~ ., data = acutelo_list[[4]])
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = acutelo_chase_c)) #assumptions not met
+plot(simulateResiduals(fittedModel = acutelo_chase_c))
 plot(simulateResiduals(fittedModel = acutelo_lat_c))
 plot(simulateResiduals(fittedModel = acutelo_cont_c))
 plot(simulateResiduals(fittedModel = acutelo_foll_c))
 
-#transforming the data to meet model assumptions
-aculo_chase_log <- as.data.frame(acutelo_list[[1]])
-aculo_chase_log$behav_count <- log(aculo_chase_log$behav_count+1)
-
-#the transformed model
-aculoglo_chase_c <- update(acutelo_chase_c, . ~ ., data = aculo_chase_log)
-
-#checking the transformed model assumptions
-plot(simulateResiduals(fittedModel = aculoglo_chase_c)) #assumptions not met
-
 #analyzing the results
-#Anova(acutelo_chase_c)
+Anova(acutelo_chase_c)
 Anova(acutelo_lat_c)
 Anova(acutelo_cont_c)
 Anova(acutelo_foll_c)
@@ -978,9 +937,15 @@ nologlo_cont_c <- update(nostirlo_cont_c, . ~ ., data = nostirlo_cont_log)
 plot(simulateResiduals(fittedModel = nologlo_lat_c)) #assumptions not met
 plot(simulateResiduals(fittedModel = nologlo_cont_c))
 
+#alternative transformation for the one that doesn't work
+nostirlo_lat_recip <- as.data.frame(nostirlo_list[[2]])
+nostirlo_lat_recip$behav_count <- (1/(nostirlo_lat_recip$behav_count+1))
+noreciplo_lat_c <- update(nostirlo_lat_c, . ~ ., data = nostirlo_lat_recip)
+plot(simulateResiduals(fittedModel = noreciplo_lat_c))
+
 #analyzing the results
 Anova(nostirlo_chase_c)
-#Anova(nostirloglo_lat_c)
+Anova(noreciplo_lat_c)
 Anova(nologlo_cont_c)
 Anova(nostirlo_foll_c)
 
