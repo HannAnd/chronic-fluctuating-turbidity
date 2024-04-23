@@ -26,6 +26,25 @@ dyedye_move <- read_csv("comparison_dye_dye_movement_data.csv")
 dyedye_social <- read_csv("comparison_dye_dye_social_data.csv")
 dyedye_boris_all <- read_csv("comparison_dye_dye_BORIS_all_data.csv")
 dyedye_boris_agg <- read_csv("comparison_dye_dye_BORIS_agg_data.csv")
+
+#adding identifier for the visibility in the flux condition during each
+#recording
+claydye_boris_all$recording <- as.character(claydye_boris_all$recording)
+claydye_boris_agg$recording <- as.character(claydye_boris_agg$recording)
+dyedye_boris_all$recording <- as.character(dyedye_boris_all$recording)
+dyedye_boris_agg$recording <- as.character(dyedye_boris_agg$recording)
+claydye_boris_all$flux_level <- claydye_boris_all$recording %>%
+                                fct_collapse(low = c("1", "3"),
+                                             high = c("2", "4"))
+claydye_boris_agg$flux_level <- claydye_boris_agg$recording %>%
+                                fct_collapse(low = c("1", "3"),
+                                             high = c("2", "4"))
+dyedye_boris_all$flux_level <- dyedye_boris_all$recording %>%
+                               fct_collapse(low = c("1", "3"),
+                                            high = c("2", "4"))
+dyedye_boris_agg$flux_level <- dyedye_boris_agg$recording %>%
+                               fct_collapse(low = c("1", "3"),
+                                            high = c("2", "4"))
 ```
 
 
@@ -648,7 +667,42 @@ c_dirnum_foll <- claydye_boris_all %>%
                                   "snow3", "wheat4", "snow4")) +
                  ylim(0,45) +
                  theme_classic()
-
+#all aggressive behaviors aggregated
+c_dirnum_agg <- claydye_boris_agg %>%
+                filter(recording == 4) %>%
+                filter(behavior == "all_aggressive") %>%
+                mutate(treatment = fct_relevel(treatment,
+                                               "clear", "stable", "flux")) %>%
+                ggplot(aes(x = treatment, y = behav_count,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                xlab("Treatments") +
+                ylab("Total Number of Aggressive Behaviors") +
+                scale_fill_manual(values = 
+                                c("slategray1", "snow", "wheat1",
+                                  "snow3", "wheat4", "snow4")) +
+                ylim(0,220) +
+                theme_classic()
+#all behaviors aggregated
+c_dirnum_all <- claydye_boris_agg %>%
+                filter(recording == 4) %>%
+                filter(behavior == "all") %>%
+                mutate(treatment = fct_relevel(treatment,
+                                               "clear", "stable", "flux")) %>%
+                ggplot(aes(x = treatment, y = behav_count,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                xlab("Treatments") +
+                ylab("Total Number of Behaviors") +
+                scale_fill_manual(values = 
+                                c("slategray1", "snow", "wheat1",
+                                  "snow3", "wheat4", "snow4")) +
+                ylim(0,300) +
+                theme_classic()
 
 #the dye/dye comparison plots
 
@@ -719,6 +773,40 @@ d_dirnum_foll <- dyedye_boris_all %>%
                                               "honeydew4", "snow4")) +
                  ylim(0,45) +
                  theme_classic()
+d_dirnum_agg <- dyedye_boris_agg %>%
+                filter(recording == 4) %>%
+                filter(behavior == "all_aggressive") %>%
+                mutate(treatment = fct_relevel(treatment,
+                                               "clear", "stable", "flux")) %>%
+                ggplot(aes(x = treatment, y = behav_count,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                xlab("Treatments") +
+                ylab("Total Number of Aggressive Behaviors") +
+                scale_fill_manual(values = c("honeydew", "snow",
+                                              "honeydew3", "snow3",
+                                              "honeydew4", "snow4")) +
+                ylim(0,220) +
+                theme_classic()
+d_dirnum_all <- dyedye_boris_agg %>%
+                filter(recording == 4) %>%
+                filter(behavior == "all") %>%
+                mutate(treatment = fct_relevel(treatment,
+                                               "clear", "stable", "flux")) %>%
+                ggplot(aes(x = treatment, y = behav_count,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                xlab("Treatments") +
+                ylab("Total Number of Behaviors") +
+                scale_fill_manual(values = c("honeydew", "snow",
+                                              "honeydew3", "snow3",
+                                              "honeydew4", "snow4")) +
+                ylim(0,300) +
+                theme_classic()
 ```
 
 
@@ -773,14 +861,48 @@ c_dirsec_foll <- claydye_boris_all %>%
                                                sep = ":"))) +
                  geom_boxplot() +
                  labs(fill = "Experiment:Treatment") +
-                 xlab("Treatments") + ylab("Mean Duration of Aggressive
-                                           Contacts (s)") +
+                 xlab("Treatments") + ylab("Mean Duration of Follows (s)") +
                  scale_fill_manual(values = 
                                 c("slategray1", "snow", "wheat1",
                                   "snow3", "wheat4", "snow4")) +
                  ylim(0,8.8) +
                  theme_classic()
-
+#mean duration of all aggressive behaviors
+c_dirsec_agg <- claydye_boris_agg %>%
+                filter(recording == 4) %>%
+                filter(behavior == "all_aggressive") %>%
+                mutate(treatment = fct_relevel(treatment,
+                                               "clear", "stable", "flux")) %>%
+                ggplot(aes(x = treatment, y = duration_s,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                xlab("Treatments") + ylab("Mean Duration of Aggressive
+                                           Behaviors (s)") +
+                scale_fill_manual(values = 
+                                  c("slategray1", "snow", "wheat1",
+                                    "snow3", "wheat4", "snow4")) +
+                ylim(0,6.5) +
+                theme_classic()
+#mean duration of all aggressive behaviors
+c_dirsec_all <- claydye_boris_agg %>%
+                filter(recording == 4) %>%
+                filter(behavior == "all") %>%
+                mutate(treatment = fct_relevel(treatment,
+                                               "clear", "stable", "flux")) %>%
+                ggplot(aes(x = treatment, y = duration_s,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                xlab("Treatments") +
+                ylab("Mean Duration of All Behaviors (s)") +
+                scale_fill_manual(values = 
+                                  c("slategray1", "snow", "wheat1",
+                                    "snow3", "wheat4", "snow4")) +
+                ylim(0,5.3) +
+                theme_classic()
 
 #the dye/dye comparison plots
 
@@ -830,29 +952,55 @@ d_dirsec_foll <- dyedye_boris_all %>%
                                                sep = ":"))) +
                  geom_boxplot() +
                  labs(fill = "Experiment:Treatment") +
-                 xlab("Treatments") + ylab("Mean Duration of Aggressive
-                                           Contacts (s)") +
+                 xlab("Treatments") + ylab("Mean Duration of Follows (s)") +
                  scale_fill_manual(values = c("honeydew", "snow",
                                               "honeydew3", "snow3",
                                               "honeydew4", "snow4")) +
                  ylim(0,8.8) +
                  theme_classic()
+#mean duration of all aggressive behaviors
+d_dirsec_agg <- dyedye_boris_agg %>%
+                filter(recording == 4) %>%
+                filter(behavior == "all_aggressive") %>%
+                mutate(treatment = fct_relevel(treatment,
+                                               "clear", "stable", "flux")) %>%
+                ggplot(aes(x = treatment, y = duration_s,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                xlab("Treatments") + ylab("Mean Duration of Aggressive
+                                           Behaviors (s)") +
+                scale_fill_manual(values = c("honeydew", "snow",
+                                              "honeydew3", "snow3",
+                                              "honeydew4", "snow4")) +
+                ylim(0,6.5) +
+                theme_classic()
+#mean duration of all aggressive behaviors
+d_dirsec_all <- dyedye_boris_agg %>%
+                filter(recording == 4) %>%
+                filter(behavior == "all") %>%
+                mutate(treatment = fct_relevel(treatment,
+                                               "clear", "stable", "flux")) %>%
+                ggplot(aes(x = treatment, y = duration_s,
+                           fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                geom_boxplot() +
+                labs(fill = "Experiment:Treatment") +
+                xlab("Treatments") +
+                ylab("Mean Duration of All Behaviors (s)") +
+                scale_fill_manual(values = c("honeydew", "snow",
+                                              "honeydew3", "snow3",
+                                              "honeydew4", "snow4")) +
+                ylim(0,5.3) +
+                theme_classic()
 ```
 
 
 ## BORIS Data, Full Comparisons, Counts
 
 ```{r boris full count}
-#adding identifier for the visibility in the flux condition during each
-#recording
-claydye_boris_all$recording <- as.character(claydye_boris_all$recording)
-dyedye_boris_all$recording <- as.character(dyedye_boris_all$recording)
-claydye_boris_all$flux_level <- claydye_boris_all$recording %>%
-                           fct_collapse(low = c("1", "3"),
-                                        high = c("2", "4"))
-dyedye_boris_all$flux_level <- dyedye_boris_all$recording %>%
-                          fct_collapse(low = c("1", "3"),
-                                       high = c("2", "4"))
+#the clay/dye comparisons
 
 #number of aggressive contacts
 c_fullnum_cont <- claydye_boris_all %>%
@@ -918,6 +1066,40 @@ c_fullnum_foll <- claydye_boris_all %>%
                                       "snow3", "wheat4", "snow4")) +
                   ylim(0,85) +
                   theme_classic()
+#all aggressive behaviors aggregated
+c_fullnum_agg <- claydye_boris_agg %>%
+                 filter(behavior == "all_aggressive") %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "stable", "flux")) %>%
+                 ggplot(aes(x = flux_level, y = behav_count,
+                            fill = interaction(experiment, treatment,
+                                              sep = ":"))) +
+                 geom_boxplot() +
+                 labs(fill = "Experiment:Treatment") +
+                 xlab("Treatments") +
+                 ylab("Total Number of Aggressive Behaviors") +
+                 scale_fill_manual(values = 
+                                 c("slategray1", "snow", "wheat1",
+                                   "snow3", "wheat4", "snow4")) +
+                 ylim(0,220) +
+                 theme_classic()
+#all behaviors aggregated
+c_fullnum_all <- claydye_boris_agg %>%
+                 filter(behavior == "all") %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "stable", "flux")) %>%
+                 ggplot(aes(x = flux_level, y = behav_count,
+                            fill = interaction(experiment, treatment,
+                                               sep = ":"))) +
+                 geom_boxplot() +
+                 labs(fill = "Experiment:Treatment") +
+                 xlab("Treatments") +
+                 ylab("Total Number of Behaviors") +
+                 scale_fill_manual(values = 
+                                 c("slategray1", "snow", "wheat1",
+                                   "snow3", "wheat4", "snow4")) +
+                 ylim(0,300) +
+                 theme_classic()
 
 
 #the dye/dye comparison plots
@@ -985,23 +1167,46 @@ d_fullnum_foll <- dyedye_boris_all %>%
                                                "honeydew4", "snow4")) +
                   ylim(0,85) +
                   theme_classic()
+#all aggressive behaviors aggregated
+d_fullnum_agg <- dyedye_boris_agg %>%
+                 filter(behavior == "all_aggressive") %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "stable", "flux")) %>%
+                 ggplot(aes(x = flux_level, y = behav_count,
+                            fill = interaction(experiment, treatment,
+                                               sep = ":"))) +
+                 geom_boxplot() +
+                 labs(fill = "Experiment:Treatment") +
+                 xlab("Treatments") +
+                 ylab("Total Number of Aggressive Behaviors") +
+                 scale_fill_manual(values = c("honeydew", "snow",
+                                               "honeydew3", "snow3",
+                                               "honeydew4", "snow4")) +
+                 ylim(0,220) +
+                 theme_classic()
+#all behaviors aggregated
+d_fullnum_all <- dyedye_boris_agg %>%
+                 filter(behavior == "all") %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "stable", "flux")) %>%
+                 ggplot(aes(x = flux_level, y = behav_count,
+                            fill = interaction(experiment, treatment,
+                                               sep = ":"))) +
+                 geom_boxplot() +
+                 labs(fill = "Experiment:Treatment") +
+                 xlab("Treatments") +
+                 ylab("Total Number of Behaviors") +
+                 scale_fill_manual(values = c("honeydew", "snow",
+                                               "honeydew3", "snow3",
+                                               "honeydew4", "snow4")) +
+                 ylim(0,300) +
+                 theme_classic()
 ```
 
 
 ## BORIS Data, Full Comparisons, Durations
 
 ```{r boris full duration}
-#adding identifier for the visibility in the flux condition during each
-#recording
-claydye_boris_all$recording <- as.character(claydye_boris_all$recording)
-dyedye_boris_all$recording <- as.character(dyedye_boris_all$recording)
-claydye_boris_all$flux_level <- claydye_boris_all$recording %>%
-                           fct_collapse(low = c("1", "3"),
-                                        high = c("2", "4"))
-dyedye_boris_all$flux_level <- dyedye_boris_all$recording %>%
-                          fct_collapse(low = c("1", "3"),
-                                       high = c("2", "4"))
-
 #the clay/dye comparison plots
 
 #mean duration of chases
@@ -1054,6 +1259,40 @@ c_fullsec_foll <- claydye_boris_all %>%
                                       "snow3", "wheat4", "snow4")) +
                   ylim(0,8.8) +
                   theme_classic()
+#mean duration of all aggressive behaviors
+c_fullsec_agg <- claydye_boris_agg %>%
+                 filter(behavior == "all_aggressive") %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "stable", "flux")) %>%
+                 ggplot(aes(x = flux_level, y = duration_s,
+                            fill = interaction(experiment, treatment,
+                                               sep = ":"))) +
+                 geom_boxplot() +
+                 labs(fill = "Experiment:Treatment") +
+                 xlab("Treatments") + ylab("Mean Duration of Aggressive
+                                            Behaviors (s)") +
+                 scale_fill_manual(values = 
+                                   c("slategray1", "snow", "wheat1",
+                                     "snow3", "wheat4", "snow4")) +
+                 ylim(0,6.5) +
+                 theme_classic()
+#mean duration of all aggressive behaviors
+c_fullsec_all <- claydye_boris_agg %>%
+                 filter(behavior == "all") %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "stable", "flux")) %>%
+                 ggplot(aes(x = flux_level, y = duration_s,
+                            fill = interaction(experiment, treatment,
+                                               sep = ":"))) +
+                 geom_boxplot() +
+                 labs(fill = "Experiment:Treatment") +
+                 xlab("Treatments") +
+                 ylab("Mean Duration of All Behaviors (s)") +
+                 scale_fill_manual(values = 
+                                   c("slategray1", "snow", "wheat1",
+                                     "snow3", "wheat4", "snow4")) +
+                 ylim(0,5.3) +
+                 theme_classic()
 
 
 #the dye/dye comparison plots
@@ -1108,4 +1347,38 @@ d_fullsec_foll <- dyedye_boris_all %>%
                                                "honeydew4", "snow4")) +
                   ylim(0,8.8) +
                   theme_classic()
+#mean duration of all aggressive behaviors
+d_fullsec_agg <- dyedye_boris_agg %>%
+                 filter(behavior == "all_aggressive") %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "stable", "flux")) %>%
+                 ggplot(aes(x = flux_level, y = duration_s,
+                            fill = interaction(experiment, treatment,
+                                               sep = ":"))) +
+                 geom_boxplot() +
+                 labs(fill = "Experiment:Treatment") +
+                 xlab("Treatments") + ylab("Mean Duration of Aggressive
+                                            Behaviors (s)") +
+                 scale_fill_manual(values = c("honeydew", "snow",
+                                              "honeydew3", "snow3",
+                                              "honeydew4", "snow4")) +
+                 ylim(0,6.5) +
+                 theme_classic()
+#mean duration of all aggressive behaviors
+d_fullsec_all <- dyedye_boris_agg %>%
+                 filter(behavior == "all") %>%
+                 mutate(treatment = fct_relevel(treatment,
+                                                "clear", "stable", "flux")) %>%
+                 ggplot(aes(x = flux_level, y = duration_s,
+                            fill = interaction(experiment, treatment,
+                                               sep = ":"))) +
+                 geom_boxplot() +
+                 labs(fill = "Experiment:Treatment") +
+                 xlab("Treatments") +
+                 ylab("Mean Duration of All Behaviors (s)") +
+                 scale_fill_manual(values = c("honeydew", "snow",
+                                              "honeydew3", "snow3",
+                                              "honeydew4", "snow4")) +
+                 ylim(0,5.3) +
+                 theme_classic()
 ```
