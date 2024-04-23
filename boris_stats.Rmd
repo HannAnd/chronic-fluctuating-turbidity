@@ -62,6 +62,35 @@ dye_dye_agg$recording <- as.character(dye_dye_agg$recording)
 
 #a list of the scored behaviors to be used in filtering the data by behavior
 behavs <- c("chasing", "lat_display", "agg_contact", "following")
+
+
+#sub-setting the data by recording for the direct comparisons and filtering by
+#behavior for the individual behavior models
+direct_claydye <- list()
+direct_dyedye <- list()
+for (i in 1:4) {
+  direct_claydye[[i]] <- clay_dye_all %>%
+                         filter(recording == "4") %>%
+                         filter(behavior == behavs[[i]])
+}
+for (i in 1:4) {
+  direct_dyedye[[i]] <- clay_dye_all %>%
+                         filter(recording == "4") %>%
+                         filter(behavior == behavs[[i]])
+}
+#and also sub-setting by recording for the aggregated behavior models
+direct_claydye[[5]] <- clay_dye_agg %>%
+                       filter(recording == "4") %>%
+                       filter(behavior == "all_aggressive")
+direct_claydye[[6]] <- clay_dye_agg %>%
+                       filter(recording == "4") %>%
+                       filter(behavior == "all")
+direct_dyedye[[5]] <- clay_dye_agg %>%
+                       filter(recording == "4") %>%
+                       filter(behavior == "all_aggressive")
+direct_dyedye[[6]] <- clay_dye_agg %>%
+                       filter(recording == "4") %>%
+                       filter(behavior == "all")
 ```
 
 
@@ -325,24 +354,7 @@ Anova(chrologlo_foll_d)
 
 ## Direct Comparisons of Count Data
 
-```{r direct}
-#sub-setting the data by recording for the direct comparisons and filtering by
-#behavior for the individual behavior models
-direct_claydye <- list()
-for (i in 1:4) {
-  direct_claydye[[i]] <- clay_dye_all %>%
-                         filter(recording == "4") %>%
-                         filter(behavior == behavs[[i]])
-}
-#and also sub-setting by recording for the aggregated behavior models
-direct_claydye[[5]] <- clay_dye_agg %>%
-                       filter(recording == "4") %>%
-                       filter(behavior == "all_aggressive")
-direct_claydye[[6]] <- clay_dye_agg %>%
-                       filter(recording == "4") %>%
-                       filter(behavior == "all")
-
-
+```{r direct count}
 #the clay vs dye models
 
 #chases
@@ -361,35 +373,175 @@ d_con_cd_all <- update(d_con_cd_chase, . ~ ., data = direct_claydye[[6]])
 #checking the model assumptions
 plot(d_con_cd_chase) #assumptions not met
 plot(d_con_cd_lat) #assumptions not met
-plot(d_con_cd_cont) #assumptions borderline
-plot(d_con_cd_foll) #assumptions borderline
-plot(d_con_cd_angr) #assumptions borderline
+plot(d_con_cd_cont)
+plot(d_con_cd_foll)
+plot(d_con_cd_angr)
 plot(d_con_cd_all) #assumptions borderline
 
 #transforming the data to meet model assumptions
 direct_cd_trans <- direct_claydye
-for (i in 1:6) {
-  direct_cd_trans[[i]]$behav_count <- log(direct_cd_trans[[i]]$behav_count+1)
-}
+direct_cd_trans[[1]]$behav_count <- sqrt(direct_cd_trans[[1]]$behav_count) +
+                                      sqrt(direct_cd_trans[[1]]$behav_count+1)
+direct_cd_trans[[2]]$behav_count <- sqrt(direct_cd_trans[[2]]$behav_count) +
+                                      sqrt(direct_cd_trans[[2]]$behav_count+1)
+direct_cd_trans[[6]]$behav_count <- sqrt(direct_cd_trans[[6]]$behav_count) +
+                                      sqrt(direct_cd_trans[[6]]$behav_count+1)
 
 #the transformed models
 d_con_cd_chase_trans <- update(d_con_cd_chase, . ~ .,
                                data = direct_cd_trans[[1]])
 d_con_cd_lat_trans <- update(d_con_cd_lat, . ~ ., data = direct_cd_trans[[2]])
-d_con_cd_cont_trans <- update(d_con_cd_cont, . ~ .,  data = direct_cd_trans[[3]])
-d_con_cd_foll_trans <- update(d_con_cd_foll, . ~ .,
-                               data = direct_cd_trans[[4]])
-d_con_cd_angr_trans <- update(d_con_cd_angr, . ~ .,
-                              data = direct_cd_trans[[5]])
 d_con_cd_all_trans <- update(d_con_cd_all, . ~ ., data = direct_cd_trans[[6]])
 
 #checking the transformed model assumptions
-plot(d_con_cd_chase_trans) #assumptions worse
-plot(d_con_cd_lat_trans) #assumptions borderline
-plot(d_con_cd_cont_trans) #assumptions worse
-plot(d_con_cd_foll_trans) #assumptions worse
-plot(d_con_cd_angr_trans) #assumptions worse
-plot(d_con_cd_all_trans) #assumptions worse
+plot(d_con_cd_chase_trans)
+plot(d_con_cd_lat_trans)
+plot(d_con_cd_all_trans)
+
+#analyzing the results
+Anova(d_con_cd_chase_trans)
+Anova(d_con_cd_lat_trans)
+Anova(d_con_cd_cont)
+Anova(d_con_cd_foll)
+Anova(d_con_cd_angr)
+Anova(d_con_cd_all_trans)
+
+
+#the dye vs dye models
+
+#chases
+d_con_dd_chase <- lm(behav_count ~ treatment*experiment,
+                     data = direct_dyedye[[1]])
+#lateral displays
+d_con_dd_lat <- update(d_con_dd_chase, . ~ ., data = direct_dyedye[[2]])
+#aggressive contacts
+d_con_dd_cont <- update(d_con_dd_chase, . ~ ., data = direct_dyedye[[3]])
+#follows
+d_con_dd_foll <- update(d_con_dd_chase, . ~ ., data = direct_dyedye[[4]])
+#aggregated aggressive behaviors
+d_con_dd_angr <- update(d_con_dd_chase, . ~ ., data = direct_dyedye[[5]])
+#all behaviors aggregated
+d_con_dd_all <- update(d_con_dd_chase, . ~ ., data = direct_dyedye[[6]])
+
+#checking the model assumptions
+plot(d_con_dd_chase) #assumptions borderline
+plot(d_con_dd_lat) #qq plot iffy
+plot(d_con_dd_cont)
+plot(d_con_dd_foll)
+plot(d_con_dd_angr)
+plot(d_con_dd_all)
+
+#transforming the data to meet model assumptions
+direct_dd_trans <- direct_dyedye
+direct_dd_trans[[1]]$behav_count <- sqrt(direct_dd_trans[[1]]$behav_count+0.5)
+direct_dd_trans[[2]]$behav_count <- sqrt(direct_dd_trans[[2]]$behav_count) +
+                                      sqrt(direct_dd_trans[[2]]$behav_count+1)
+
+#the transformed models
+d_con_dd_chase_trans <- update(d_con_dd_chase, . ~ .,
+                               data = direct_dd_trans[[1]])
+d_con_dd_lat_trans <- update(d_con_dd_chase, . ~ .,
+                               data = direct_dd_trans[[2]])
+
+#checking the transformed model assumptions
+plot(d_con_dd_chase_trans)
+plot(d_con_dd_lat_trans)
+
+#analyzing the results
+Anova(d_con_dd_chase_trans)
+Anova(d_con_dd_lat_trans)
+Anova(d_con_dd_cont)
+Anova(d_con_dd_foll)
+Anova(d_con_dd_angr)
+Anova(d_con_dd_all)
+```
+
+
+## Direct Comparison of Duration Data
+
+```{r direct duration}
+#the clay vs dye models
+
+#chases
+d_dur_cd_chase <- lm(duration_s ~ treatment*experiment, data = direct_claydye[[1]])
+#lateral displays
+d_dur_cd_lat <- update(d_dur_cd_chase, . ~ ., data = direct_claydye[[2]])
+#follows
+d_dur_cd_foll <- update(d_dur_cd_chase, . ~ ., data = direct_claydye[[4]])
+#aggregated aggressive behaviors
+d_dur_cd_angr <- update(d_dur_cd_chase, . ~ ., data = direct_claydye[[5]])
+#all behaviors aggregated
+d_dur_cd_all <- update(d_dur_cd_chase, . ~ ., data = direct_claydye[[6]])
+
+#checking the model assumptions
+plot(d_dur_cd_chase) #assumptions not met
+plot(d_dur_cd_lat)
+plot(d_dur_cd_foll)
+plot(d_dur_cd_angr) #not great
+plot(d_dur_cd_all)
+
+#transforming the data to meet model assumptions
+direct_cd_trans <- direct_claydye
+direct_cd_trans[[1]]$duration_s <- log(direct_cd_trans[[1]]$duration_s)
+direct_cd_trans[[5]]$duration_s <- log(direct_cd_trans[[5]]$duration_s)
+
+#the transformed models
+d_dur_cd_chase_trans <- update(d_dur_cd_chase, . ~ .,
+                               data = direct_cd_trans[[1]])
+d_dur_cd_angr_trans <- update(d_dur_cd_angr, . ~ ., data = direct_cd_trans[[5]])
+
+#checking the transformed model assumptions
+plot(d_dur_cd_chase_trans)
+plot(d_dur_cd_angr_trans)
+
+#analyzing the results
+Anova(d_dur_cd_chase_trans)
+Anova(d_dur_cd_lat)
+Anova(d_dur_cd_foll)
+Anova(d_dur_cd_angr_trans)
+Anova(d_dur_cd_all)
+
+
+
+###NONE OF THE BELOW IS READY
+#the dye vs dye models
+
+#chases
+d_dur_dd_chase <- lm(duration_s ~ treatment*experiment,
+                     data = direct_dyedye[[1]])
+#lateral displays
+d_dur_dd_lat <- update(d_dur_dd_chase, . ~ ., data = direct_dyedye[[2]])
+#follows
+d_dur_dd_foll <- update(d_dur_dd_chase, . ~ ., data = direct_dyedye[[4]])
+#aggregated aggressive behaviors
+d_dur_dd_angr <- update(d_dur_dd_chase, . ~ ., data = direct_dyedye[[5]])
+#all behaviors aggregated
+d_dur_dd_all <- update(d_dur_dd_chase, . ~ ., data = direct_dyedye[[6]])
+
+#checking the model assumptions
+plot(d_dur_dd_chase) #iffy
+plot(d_dur_dd_lat)
+plot(d_dur_dd_foll)
+plot(d_dur_dd_angr)
+plot(d_dur_dd_all)
+
+#transforming the data to meet model assumptions
+direct_dd_trans <- direct_dyedye
+direct_dd_trans[[1]]$duration_s <- log(direct_dd_trans[[1]]$duration_s)
+
+#the transformed model
+d_dur_dd_chase_trans <- update(d_dur_dd_chase, . ~ .,
+                               data = direct_dd_trans[[1]])
+
+#checking the transformed model assumptions
+plot(d_dur_dd_chase_trans)
+
+#analyzing the results
+Anova(d_dur_dd_chase_trans)
+Anova(d_dur_dd_lat)
+Anova(d_dur_dd_foll)
+Anova(d_dur_dd_angr)
+Anova(d_dur_dd_all)
 ```
 
 
