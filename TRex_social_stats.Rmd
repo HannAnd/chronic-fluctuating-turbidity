@@ -185,11 +185,6 @@ plot(trans_d_claydye_shoal)
 plot(trans_d_claydye_neigh)
 plot(trans_d_claydye_pol)
 
-#analyzing the models
-Anova(trans_d_claydye_shoal)
-Anova(trans_d_claydye_neigh)
-Anova(trans_d_claydye_pol)
-
 
 #the stirred vs unstirred dye models
 
@@ -218,10 +213,38 @@ d_trans_dye_pol <- update(d_dyedye_pol, . ~ ., data = trans_direct_dye)
 plot(d_trans_dye_shoal)
 plot(d_trans_dye_pol)
 
-#analyzing the models
-Anova(d_trans_dye_shoal)
-Anova(d_dyedye_neigh)
-Anova(d_trans_dye_pol)
+
+#analyzing the results of the LMs and putting them in tibbles within a list for
+#easy export
+results_lm <- list()
+results_lm[[1]] <- tidy(Anova(trans_d_claydye_shoal))
+results_lm[[2]] <- tidy(Anova(trans_d_claydye_neigh))
+results_lm[[3]] <- tidy(Anova(trans_d_claydye_pol))
+results_lm[[4]] <- tidy(Anova(d_trans_dye_shoal))
+results_lm[[5]] <- tidy(Anova(d_dyedye_neigh))
+results_lm[[6]] <- tidy(Anova(d_trans_dye_pol))
+
+#adding columns with additional identifying information to all tibbles within the
+#results list
+dependent_variables <- c("shoal_area", "mean_neighbor_distance", "polarity",
+                         "shoal_area", "mean_neighbor_distance", "polarity")
+for (i in 1:3) {
+  results_lm[[i]]$experiments <- "claydye"
+  results_lm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+for (i in 4:6) {
+  results_lm[[i]]$experiments <- "dyedye"
+  results_lm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+#combining the LM results into a single tibble
+results_lm_coll <- do.call(rbind, results_lm)
+#reordering the columns to be more intuitive
+results_lm_coll <- results_lm_coll %>%
+                   select(experiments, dependent_variable, term, sumsq, df,
+                          statistic, p.value)
+
+#exporting the results to .csv
+write_csv(results_lm_coll, "direct_comparison_proximity_LMs.csv")
 ```
 
 
@@ -287,9 +310,7 @@ plot(simulateResiduals(fittedModel = claydye_neigh))
 plot(simulateResiduals(fittedModel = claydye_pol))
 
 #analyzing the models
-Anova(claydye_shoal)
-Anova(claydye_neigh)
-Anova(claydye_pol)
+
 
 #post hoc pairwise comparisons of the significant results
 claydye_shoal %>% emmeans(pairwise ~ treatment:time)
@@ -311,7 +332,46 @@ plot(simulateResiduals(fittedModel = dyedye_neigh))
 plot(simulateResiduals(fittedModel = dyedye_pol))
 
 #analyzing the models
-Anova(dyedye_shoal)
-Anova(dyedye_neigh)
-Anova(dyedye_pol)
+
+
+
+#analysing the results of the LMMs and putting them in tibbles within a list for
+#easy export
+results_lmm <- list()
+results_lmm[[1]] <- tidy(Anova(claydye_shoal))
+results_lmm[[2]] <- tidy(Anova(claydye_neigh))
+results_lmm[[3]] <- tidy(Anova(claydye_pol))
+results_lmm[[4]] <- tidy(Anova(dyedye_shoal))
+results_lmm[[5]] <- tidy(Anova(dyedye_neigh))
+results_lmm[[6]] <- tidy(Anova(dyedye_pol))
+
+#adding columns with additional identifying information to all tibbles within
+#the results list
+dependent_variables <- c("shoal_area", "mean_neighbor_distance", "polarity",
+                         "shoal_area", "mean_neighbor_distance", "polarity")
+for (i in 1:3) {
+  results_lmm[[i]]$experiments <- "claydye"
+  results_lmm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+for (i in 4:6) {
+  results_lmm[[i]]$experiments <- "dyedye"
+  results_lmm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+#combining the LMM results list into a single tibble
+results_lmm_coll <- do.call(rbind, results_lmm)
+#reordering the columns to be more intuitive
+results_lmm_coll <- results_lmm_coll %>%
+                    select(experiments, dependent_variable, term, df, statistic,
+                           p.value)
+
+#post hoc pairwise comparisons of the significant LMM results
+pair_lmm <- as.data.frame(pairs(emmeans(claydye_pol, ~ treatment | time)))
+pair_lmm$experiments <- "claydye"
+pair_lmm$dependent_variable <- "polarity"
+pair_lmm <- pair_lmm %>%
+            select(experiments, dependent_variable, everything())
+
+#exporting the results to .csv
+write_csv(results_lmm_coll, "full_comparison_proximity_LMMs.csv")
+write_csv(pair_lmm, "full_comparison_pairwise_polarity_LMM.csv")
 ```
