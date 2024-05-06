@@ -165,9 +165,9 @@ d_claydye_neigh <- update(d_claydye_shoal, mean_neighbor ~ .)
 d_claydye_pol <- update(d_claydye_shoal, polarity ~ .)
 
 #checking the model assumptions
-plot(d_claydye_shoal) #assumptions not met
-plot(d_claydye_neigh) #assumptions not met
-plot(d_claydye_pol) #assumptions not met
+#plot(d_claydye_shoal) #assumptions not met
+#plot(d_claydye_neigh) #assumptions not met
+#plot(d_claydye_pol) #assumptions not met
 
 #transforming the data to meet model assumptions
 d_trans_claydye <- direct_claydye
@@ -181,9 +181,9 @@ trans_d_claydye_neigh <- update(d_claydye_neigh, . ~ ., data = d_trans_claydye)
 trans_d_claydye_pol <- update(d_claydye_pol, . ~ ., data = d_trans_claydye)
 
 #checking the transformed model assumptions
-plot(trans_d_claydye_shoal)
-plot(trans_d_claydye_neigh)
-plot(trans_d_claydye_pol)
+#plot(trans_d_claydye_shoal)
+#plot(trans_d_claydye_neigh)
+#plot(trans_d_claydye_pol)
 
 
 #the stirred vs unstirred dye models
@@ -196,9 +196,9 @@ d_dyedye_neigh <- update(d_dyedye_shoal, mean_neighbor ~ .)
 d_dyedye_pol <- update(d_dyedye_shoal, polarity ~ .)
 
 #checking the model assumptions
-plot(d_dyedye_shoal) #assumptions not met
-plot(d_dyedye_neigh)
-plot(d_dyedye_pol) #assumptions not met
+#plot(d_dyedye_shoal) #assumptions not met
+#plot(d_dyedye_neigh)
+#plot(d_dyedye_pol) #assumptions not met
 
 #transforming the data to meet model assumptions
 trans_direct_dye <- direct_dyedye
@@ -210,8 +210,8 @@ d_trans_dye_shoal <- update(d_dyedye_shoal, . ~ ., data = trans_direct_dye)
 d_trans_dye_pol <- update(d_dyedye_pol, . ~ ., data = trans_direct_dye)
 
 #checking the transformed model assumptions
-plot(d_trans_dye_shoal)
-plot(d_trans_dye_pol)
+#plot(d_trans_dye_shoal)
+#plot(d_trans_dye_pol)
 
 
 #analyzing the results of the LMs and putting them in tibbles within a list for
@@ -305,9 +305,9 @@ claydye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
 claydye_pol <- update(claydye_shoal, polarity ~ .)
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = claydye_shoal))
-plot(simulateResiduals(fittedModel = claydye_neigh))
-plot(simulateResiduals(fittedModel = claydye_pol))
+#plot(simulateResiduals(fittedModel = claydye_shoal))
+#plot(simulateResiduals(fittedModel = claydye_neigh))
+#plot(simulateResiduals(fittedModel = claydye_pol))
 
 
 #the stirred vs unstirred dye models
@@ -321,9 +321,9 @@ dyedye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
 dyedye_pol <- update(claydye_shoal, polarity ~ .)
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = dyedye_shoal))
-plot(simulateResiduals(fittedModel = dyedye_neigh))
-plot(simulateResiduals(fittedModel = dyedye_pol))
+#plot(simulateResiduals(fittedModel = dyedye_shoal))
+#plot(simulateResiduals(fittedModel = dyedye_neigh))
+#plot(simulateResiduals(fittedModel = dyedye_pol))
 
 
 #analysing the results of the LMMs and putting them in tibbles within a list for
