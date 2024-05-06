@@ -309,12 +309,6 @@ plot(simulateResiduals(fittedModel = claydye_shoal))
 plot(simulateResiduals(fittedModel = claydye_neigh))
 plot(simulateResiduals(fittedModel = claydye_pol))
 
-#analyzing the models
-
-
-#post hoc pairwise comparisons of the significant results
-claydye_shoal %>% emmeans(pairwise ~ treatment:time)
-
 
 #the stirred vs unstirred dye models
 
@@ -330,9 +324,6 @@ dyedye_pol <- update(claydye_shoal, polarity ~ .)
 plot(simulateResiduals(fittedModel = dyedye_shoal))
 plot(simulateResiduals(fittedModel = dyedye_neigh))
 plot(simulateResiduals(fittedModel = dyedye_pol))
-
-#analyzing the models
-
 
 
 #analysing the results of the LMMs and putting them in tibbles within a list for
