@@ -98,11 +98,11 @@ d_claydye_accel <- update(d_claydye_speed, max_acceleration ~ .)
 d_claydye_dist <- update(d_claydye_speed, totaldist_cm ~ .)
 
 #checking the model assumptions
-plot(d_claydye_speed)
-plot(d_claydye_maxsp)
-plot(d_claydye_activ) #assumptions not met
-plot(d_claydye_accel)
-plot(d_claydye_dist)
+#plot(d_claydye_speed)
+#plot(d_claydye_maxsp)
+#plot(d_claydye_activ) #assumptions not met
+#plot(d_claydye_accel)
+#plot(d_claydye_dist)
 
 #using an alternative regression family to meet model assumptions
 beta_d_claydye_activ <- glmmTMB(activity_ratio ~ treatment*experiment,
@@ -110,7 +110,7 @@ beta_d_claydye_activ <- glmmTMB(activity_ratio ~ treatment*experiment,
                                                                link = "logit"))
 
 #checking the assumptions of the GLM
-plot(simulateResiduals(fittedModel = beta_d_claydye_activ))
+#plot(simulateResiduals(fittedModel = beta_d_claydye_activ))
 
 
 #the stirred vs unstirred dye models
@@ -127,11 +127,11 @@ d_dyedye_accel <- update(d_dyedye_speed, max_acceleration ~ .)
 d_dyedye_dist <- update(d_dyedye_speed, totaldist_cm ~ .)
 
 #checking the model assumptions
-plot(d_dyedye_speed)
-plot(d_dyedye_maxsp)
-plot(d_dyedye_activ) #assumptions not met
-plot(d_dyedye_accel)
-plot(d_dyedye_dist)
+#plot(d_dyedye_speed)
+#plot(d_dyedye_maxsp)
+#plot(d_dyedye_activ) #assumptions not met
+#plot(d_dyedye_accel)
+#plot(d_dyedye_dist)
 
 #using an alternative regression family to meet model assumptions for activity
 beta_d_dyedye_activ <- glmmTMB(activity_ratio ~ treatment*experiment,
@@ -139,7 +139,7 @@ beta_d_dyedye_activ <- glmmTMB(activity_ratio ~ treatment*experiment,
                                                                link = "logit"))
 
 #checking the assumptions of the GLM
-plot(simulateResiduals(fittedModel = beta_d_dyedye_activ))
+#plot(simulateResiduals(fittedModel = beta_d_dyedye_activ))
 
 
 #analyzing the results of the LMs and putting them in tibbles within a list for
@@ -287,18 +287,18 @@ claydye_accel <- update(claydye_speed, max_acceleration ~ .)
 claydye_dist <- update(claydye_speed, totaldist_cm ~ .)
 
 #testing model assumptions
-plot(simulateResiduals(fittedModel = claydye_speed))
-plot(simulateResiduals(fittedModel = claydye_maxsp))
-plot(simulateResiduals(fittedModel = claydye_activ)) #assumptions not met
-plot(simulateResiduals(fittedModel = claydye_accel))
-plot(simulateResiduals(fittedModel = claydye_dist))
+#plot(simulateResiduals(fittedModel = claydye_speed))
+#plot(simulateResiduals(fittedModel = claydye_maxsp))
+#plot(simulateResiduals(fittedModel = claydye_activ)) #assumptions not met
+#plot(simulateResiduals(fittedModel = claydye_accel))
+#plot(simulateResiduals(fittedModel = claydye_dist))
 
 #using an alternative regression family to meet model assumptions
 beta_claydye_activ <- update(claydye_activ, . ~ ., family = ordbeta(link =
                                                                     "logit"))
 
 #checking the assumptions of the GLM
-plot(simulateResiduals(fittedModel = beta_claydye_activ))
+#plot(simulateResiduals(fittedModel = beta_claydye_activ))
 
 
 #the stirred vs unstirred dye models
@@ -316,11 +316,11 @@ dyedye_accel <- update(dyedye_speed, max_acceleration ~ .)
 dyedye_dist <- update(dyedye_speed, totaldist_cm ~ .)
 
 #testing model assumptions
-plot(simulateResiduals(fittedModel = dyedye_speed))
-plot(simulateResiduals(fittedModel = dyedye_maxsp)) #assumptions not met
-plot(simulateResiduals(fittedModel = dyedye_activ)) #assumptions not met
-plot(simulateResiduals(fittedModel = dyedye_accel))
-plot(simulateResiduals(fittedModel = dyedye_dist))
+#plot(simulateResiduals(fittedModel = dyedye_speed))
+#plot(simulateResiduals(fittedModel = dyedye_maxsp)) #assumptions not met
+#plot(simulateResiduals(fittedModel = dyedye_activ)) #assumptions not met
+#plot(simulateResiduals(fittedModel = dyedye_accel))
+#plot(simulateResiduals(fittedModel = dyedye_dist))
 
 #transforming the data to meet model assumptions
 trans_full_dye <- full_dyedye
@@ -330,14 +330,14 @@ trans_full_dye$max_speed <- log(trans_full_dye$max_speed)
 trans_dyedye_maxsp <- update(dyedye_maxsp, . ~ ., data = trans_full_dye)
 
 #checking the transformed model assumptions
-plot(simulateResiduals(fittedModel = trans_dyedye_maxsp))
+#plot(simulateResiduals(fittedModel = trans_dyedye_maxsp))
 
 #using an alternative regression family to meet model assumptions
 beta_dyedye_activ <- update(dyedye_activ, . ~ ., family = ordbeta(link =
                                                                   "logit"))
 
 #checking the assumptions of the GLM
-plot(simulateResiduals(fittedModel = beta_dyedye_activ))
+#plot(simulateResiduals(fittedModel = beta_dyedye_activ))
 
 
 #analyzing the results of the LMMs and putting them in tibbles within a list for
