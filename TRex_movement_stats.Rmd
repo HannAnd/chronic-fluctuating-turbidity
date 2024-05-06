@@ -19,6 +19,7 @@ library(glmmTMB)
 library(emmeans)
 library(car)
 library(DHARMa)
+library(broom)
 
 #importing the data
 #chronic_clay <- read_csv("chronic_clay_movement_data.csv")
@@ -197,6 +198,7 @@ pair_lm[[3]] <- as.data.frame(pairs(emmeans(d_claydye_dist, ~ treatment),
                                     combine = TRUE))
 pair_lm[[4]] <- as.data.frame(pairs(emmeans(d_dyedye_speed, ~ treatment),
                                     combine = TRUE))
+
 dependent_variables <- c("mean_speed", "max_speed", "total_distance")
 for (i in 1:3) {
   pair_lm[[i]]$experiments <- "claydye"
@@ -204,19 +206,18 @@ for (i in 1:3) {
 }
 pair_lm[[4]]$experiments <- "dyedye"
 pair_lm[[4]]$dependent_variable <- "mean_speed"
-for (i in 1:4) {
-  pair_lm[[i]] <- pair_lm[[i]] %>%
-                  select(experiments, dependent_variable, everything())
-}
+pair_lm_col <- do.call(rbind, pair_lm)
+pair_lm_col <- pair_lm %>%
+               select(experiments, dependent_variable, everything())
 
 
 #exporting the results to .csv
 write_csv(results_lm_coll, "direct_comparison_movement_LMs.csv")
 write_csv(results_glm_coll, "direct_comparison_movement_GLMs.csv")
-write_csv(pair_lm[[1]], "pairwise_claydye_mean_speed.csv")
-write_csv(pair_lm[[2]], "pairwise_claydye_max_speed.csv")
-write_csv(pair_lm[[3]], "pairwise_claydye_total_distance.csv")
-write_csv(pair_lm[[4]], "pairwise_dyedye_mean_speed.csv")
+write_csv(pair_lm[[1]], "direct_pairwise_claydye_mean_speed.csv")
+write_csv(pair_lm[[2]], "direct_pairwise_claydye_max_speed.csv")
+write_csv(pair_lm[[3]], "direct_pairwise_claydye_total_distance.csv")
+write_csv(pair_lm[[4]], "direct_pairwise_dyedye_mean_speed.csv")
 ```
 
 
@@ -302,23 +303,6 @@ beta_claydye_activ <- update(claydye_activ, . ~ ., family = ordbeta(link =
 #checking the assumptions of the GLM
 plot(simulateResiduals(fittedModel = beta_claydye_activ))
 
-#analyzing the models
-Anova(claydye_speed)
-Anova(claydye_maxsp)
-Anova(beta_claydye_activ)
-Anova(claydye_accel)
-Anova(claydye_dist)
-
-#post hoc pairwise comparisons of the significant results
-claydye_speed %>% emmeans(pairwise ~ treatment)
-claydye_speed %>% emmeans(pairwise ~ treatment:time)
-claydye_speed %>% emmeans(pairwise ~ treatment:experiment:time)
-claydye_maxsp %>% emmeans(pairwise ~ treatment:time)
-beta_claydye_activ %>% emmeans(pairwise ~ treatment)
-claydye_dist %>% emmeans(pairwise ~ treatment)
-claydye_dist %>% emmeans(pairwise ~ treatment:time)
-claydye_dist %>% emmeans(pairwise ~ treatment:experiment:time)
-
 
 #the stirred vs unstirred dye models
 
@@ -358,17 +342,103 @@ beta_dyedye_activ <- update(dyedye_activ, . ~ ., family = ordbeta(link =
 #checking the assumptions of the GLM
 plot(simulateResiduals(fittedModel = beta_dyedye_activ))
 
-#analyzing the models
-Anova(dyedye_speed)
-Anova(trans_dyedye_maxsp)
-Anova(beta_dyedye_activ)
-Anova(dyedye_accel)
-Anova(dyedye_dist)
-
 #post hoc pairwise comparisons of the significant results
 dyedye_speed %>% emmeans(pairwise ~ treatment)
 dyedye_speed %>% emmeans(pairwise ~ treatment:time)
 beta_claydye_activ %>% emmeans(pairwise ~ treatment)
 dyedye_dist %>% emmeans(pairwise ~ treatment)
 dyedye_dist %>% emmeans(pairwise ~ treatment:time)
+
+
+#analyzing the results of the LMMs and putting them in tibbles within a list for
+#easy export
+results_lmm <- list()
+results_lmm[[1]] <- tidy(Anova(claydye_speed))
+results_lmm[[2]] <- tidy(Anova(claydye_maxsp))
+results_lmm[[3]] <- tidy(Anova(claydye_accel))
+results_lmm[[4]] <- tidy(Anova(claydye_dist))
+results_lmm[[5]] <- tidy(Anova(dyedye_speed))
+results_lmm[[6]] <- tidy(Anova(trans_dyedye_maxsp))
+results_lmm[[7]] <- tidy(Anova(dyedye_accel))
+results_lmm[[8]] <- tidy(Anova(dyedye_dist))
+
+#adding columns with additional identifying information to all tibbles within
+#the results list
+dependent_variables <- c("mean_speed", "max_speed", "max_acceleration",
+                   "total_distance","mean_speed", "max_speed",
+                   "max_acceleration", "total_distance")
+for (i in 1:4) {
+  results_lmm[[i]]$experiments <- "claydye"
+  results_lmm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+for (i in 5:8) {
+  results_lmm[[i]]$experiments <- "dyedye"
+  results_lmm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+#combining the LMM results list into a single tibble
+results_lmm_coll <- do.call(rbind, results_lmm)
+#reordering the columns to be more intuitive
+results_lmm_coll <- results_lmm_coll %>%
+                    select(experiments, dependent_variable, term, df, statistic,
+                           p.value)
+
+#doing the same for the GLMMs as with the LMMs
+results_glmm <- list()
+results_glmm[[1]] <- tidy(Anova(beta_claydye_activ))
+results_glmm[[2]] <- tidy(Anova(beta_dyedye_activ))
+results_glmm[[1]]$experiments <- "claydye"
+results_glmm[[2]]$experiments <- "dyedye"
+for (i in 1:2) {
+  results_glmm[[i]]$dependent_variable <- "activity_ratio"
+}
+results_glmm_coll <- do.call(rbind(results_glmm))
+results_glmm_coll <- results_glmm_coll %>%
+                     select(experiments, dependent_variable, term, df, statistic,
+                           p.value)
+
+#post hoc pairwise comparisons of the significant LMM results
+pair_lmm <- list()
+pair_lmm[[1]] <- as.data.frame(pairs(emmeans(claydye_speed, ~ treatment |
+                                                              experiment |
+                                                              time)))
+pair_lmm[[2]] <- as.data.frame(pairs(emmeans(claydye_maxsp, ~ treatment |
+                                                              time)))
+pair_lmm[[3]] <- as.data.frame(pairs(emmeans(claydye_dist, ~ treatment |
+                                                             experiment |
+                                                             time)))
+pair_lmm[[4]] <- as.data.frame(pairs(emmeans(dyedye_speed, ~ treatment | time)))
+pair_lmm[[5]] <- as.data.frame(pairs(emmeans(dyedye_activ, ~ treatment)))
+pair_lmm[[6]] <- as.data.frame(pairs(emmeans(dyedye_dist, ~ treatment | time)))
+
+for (i in 1:3) {
+  pair_lmm[[i]]$experiments <- "claydye"
+}
+for (i in 5:7) {
+  pair_lmm[[i]]$experiments <- "dyedye"
+}
+pair_lmm[[1]]$dependent_variable <- "mean_speed"
+pair_lmm[[2]]$dependent_variable <- "max_speed"
+pair_lmm[[3]]$dependent_variable <- "total_distance"
+pair_lmm[[4]]$dependent_variable <- "mean_speed"
+pair_lmm[[5]]$dependent_variable <- "activity_ratio"
+pair_lmm[[6]]$dependent_variable <- "total_distance"
+pair_lmm_coll <- do.call(rbind, results_lmm)
+pair_lmm_coll <- results_lmm_coll %>%
+                    select(experiments, dependent_variable, estimate, SE, df,
+                           t.ratio, p.value)
+
+#post hoc pairwise comparisons of the significant GLMM result
+pair_glmm <- as.data.frame(pairs(emmeans(beta_claydye_activ, ~ treatment)))
+pair_glmm$experiments <- "claydye"
+pair_glmm$dependent_variable <- "activity_ratio"
+pair_glmm <- pair_glmm %>%
+             select(experiments, dependent_variable, estimate, SE, df, z.ratio,
+                    p.value)
+
+
+#exporting the results to .csv
+write_csv(results_lmm_coll, "full_comparison_movement_LMMs.csv")
+write_csv(results_glmm_coll, "full_comparison_movement_GLMMs.csv")
+write_csv(pair_lmm_coll, "full_pairwise_comparison_movement_LMMs.csv")
+write_csv(pair_glmm, "full_pairwise_comparison_movement_GLMMs.csv")
 ```
