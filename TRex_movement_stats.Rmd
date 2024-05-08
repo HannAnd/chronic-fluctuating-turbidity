@@ -417,7 +417,7 @@ pair_lmm_coll_two <- rbind(pair_lmm[[2]], pair_lmm[[4]])
 pair_lmm_coll_two <- rbind(pair_lmm_coll_two, pair_lmm[[6]])
 pair_lmm_coll_three <- pair_lmm_coll_three %>%
                        select(experiments, dependent_variable, everything())
-pair_lmm_coll_three <- pair_lmm_coll_two %>%
+pair_lmm_coll_two <- pair_lmm_coll_two %>%
                        select(experiments, dependent_variable, everything())
 
 #post hoc pairwise comparisons of the significant GLMM result
@@ -432,8 +432,8 @@ pair_glmm <- pair_glmm %>%
 #exporting the results to .csv
 write_csv(results_lmm_coll, "full_comparison_movement_LMMs.csv")
 write_csv(results_glmm_coll, "full_comparison_movement_GLMMs.csv")
-write_csv(pair_lmm_coll_three, "full_pairwise_threeway_interaction_LMMs.csv")
-write_csv(pair_lmm_coll_two, "full_pairwise_twoway_interaction_LMMs.csv")
-write_csv(pair_lmm[[5]], "full_pairwise_no_interaction_LMMs.csv")
+write_csv(pair_lmm_coll_three, "full_pairwise_threeway_interaction_movement_LMMs.csv")
+write_csv(pair_lmm_coll_two, "full_pairwise_twoway_interaction_movement_LMMs.csv")
+write_csv(pair_lmm[[5]], "full_pairwise_no_interaction_movement_LMMs.csv")
 write_csv(pair_glmm, "full_pairwise_comparison_movement_GLMMs.csv")
 ```

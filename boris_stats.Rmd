@@ -43,6 +43,7 @@ library(emmeans)
 library(car)
 library(DHARMa)
 library(performance)
+library(broom)
 
 #importing the base data
 chron_clay <- read_csv("chronic_clay_BORIS_all.csv")
@@ -410,12 +411,12 @@ d_con_cd_angr <- update(d_con_cd_chase, . ~ ., data = direct_claydye[[5]])
 d_con_cd_all <- update(d_con_cd_chase, . ~ ., data = direct_claydye[[6]])
 
 #checking the model assumptions
-plot(d_con_cd_chase) #assumptions not met
-plot(d_con_cd_lat) #assumptions not met
-plot(d_con_cd_cont)
-plot(d_con_cd_foll)
-plot(d_con_cd_angr)
-plot(d_con_cd_all) #assumptions borderline
+#plot(d_con_cd_chase) #assumptions not met
+#plot(d_con_cd_lat) #assumptions not met
+#plot(d_con_cd_cont)
+#plot(d_con_cd_foll)
+#plot(d_con_cd_angr)
+#plot(d_con_cd_all) #assumptions borderline
 
 #transforming the data to meet model assumptions
 direct_cd_trans <- direct_claydye
@@ -433,17 +434,9 @@ d_con_cd_lat_trans <- update(d_con_cd_lat, . ~ ., data = direct_cd_trans[[2]])
 d_con_cd_all_trans <- update(d_con_cd_all, . ~ ., data = direct_cd_trans[[6]])
 
 #checking the transformed model assumptions
-plot(d_con_cd_chase_trans)
-plot(d_con_cd_lat_trans)
-plot(d_con_cd_all_trans)
-
-#analyzing the results
-Anova(d_con_cd_chase_trans)
-Anova(d_con_cd_lat_trans)
-Anova(d_con_cd_cont)
-Anova(d_con_cd_foll)
-Anova(d_con_cd_angr)
-Anova(d_con_cd_all_trans)
+#plot(d_con_cd_chase_trans)
+#plot(d_con_cd_lat_trans)
+#plot(d_con_cd_all_trans)
 
 
 #the dye vs dye models
@@ -463,12 +456,12 @@ d_con_dd_angr <- update(d_con_dd_chase, . ~ ., data = direct_dyedye[[5]])
 d_con_dd_all <- update(d_con_dd_chase, . ~ ., data = direct_dyedye[[6]])
 
 #checking the model assumptions
-plot(d_con_dd_chase)
-plot(d_con_dd_lat) #assumptions not met
-plot(d_con_dd_cont) #assumptions not met
-plot(d_con_dd_foll)
-plot(d_con_dd_angr)
-plot(d_con_dd_all) #assumptions not met
+#plot(d_con_dd_chase)
+#plot(d_con_dd_lat) #assumptions not met
+#plot(d_con_dd_cont) #assumptions not met
+#plot(d_con_dd_foll)
+#plot(d_con_dd_angr)
+#plot(d_con_dd_all) #assumptions not met
 
 #transforming the data to meet model assumptions
 direct_dd_trans <- direct_dyedye
@@ -485,17 +478,50 @@ d_con_dd_cont_trans <- update(d_con_dd_cont, . ~ ., data = direct_dd_trans[[3]])
 d_con_dd_all_trans <- update(d_con_dd_all, . ~ ., data = direct_dd_trans[[6]])
 
 #checking the transformed model assumptions
-plot(d_con_dd_lat_trans)
-plot(d_con_dd_cont_trans)
-plot(d_con_dd_all_trans)
+#plot(d_con_dd_lat_trans)
+#plot(d_con_dd_cont_trans)
+#plot(d_con_dd_all_trans)
 
-#analyzing the results
-Anova(d_con_dd_chase)
-Anova(d_con_dd_lat_trans)
-Anova(d_con_dd_cont_trans)
-Anova(d_con_dd_foll)
-Anova(d_con_dd_angr)
-Anova(d_con_dd_all_trans)
+
+#analyzing the results of the LMs and putting in tibbles within a list for easy
+#export
+results_lm <- list()
+results_lm[[1]] <- tidy(Anova(d_con_cd_chase_trans))
+results_lm[[2]] <- tidy(Anova(d_con_cd_lat_trans))
+results_lm[[3]] <- tidy(Anova(d_con_cd_cont))
+results_lm[[4]] <- tidy(Anova(d_con_cd_foll))
+results_lm[[5]] <- tidy(Anova(d_con_cd_angr))
+results_lm[[6]] <- tidy(Anova(d_con_cd_all_trans))
+results_lm[[7]] <- tidy(Anova(d_con_dd_chase))
+results_lm[[8]] <- tidy(Anova(d_con_dd_lat_trans))
+results_lm[[9]] <- tidy(Anova(d_con_dd_cont_trans))
+results_lm[[10]] <- tidy(Anova(d_con_dd_foll))
+results_lm[[11]] <- tidy(Anova(d_con_dd_angr))
+results_lm[[12]] <- tidy(Anova(d_con_dd_all_trans))
+
+#adding columns with additional identifying information to all tibbles within
+#the results list
+dependent_variables <- c("chasing", "lateral_display", "aggressive_contact",
+                         "following", "aggregated_aggression", "all_behaviors",
+                         "chasing", "lateral_display", "aggressive_contact",
+                         "following", "aggregated_aggression", "all_behaviors")
+for (i in 1:6) {
+  results_lm[[i]]$experiments <- "claydye"
+  results_lm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+for (i in 7:12) {
+  results_lm[[i]]$experiments <- "dyedye"
+  results_lm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+#combining the LM results list into a single tibble
+results_lm_coll <- do.call(rbind, results_lm)
+#reordering the columns to be more intuitive
+results_lm_coll <- results_lm_coll %>%
+                   select(experiments, dependent_variable, term, sumsq, df,
+                          statistic, p.value)
+
+#writing the results to .csv
+write_csv(results_lm_coll, "direct_comparison_BORIS_count_LMs.csv")
 ```
 
 
@@ -517,16 +543,16 @@ d_dur_cd_angr <- update(d_dur_cd_chase, . ~ ., data = direct_claydye[[5]])
 d_dur_cd_all <- update(d_dur_cd_chase, . ~ ., data = direct_claydye[[6]])
 
 #checking the model assumptions
-plot(d_dur_cd_chase) #assumptions not met
-plot(d_dur_cd_lat)
-plot(d_dur_cd_foll)
-plot(d_dur_cd_angr) #assumptions not met
-plot(d_dur_cd_all)
+#plot(d_dur_cd_chase) #assumptions not met
+#plot(d_dur_cd_lat)
+#plot(d_dur_cd_foll)
+#plot(d_dur_cd_angr) #assumptions not met
+#plot(d_dur_cd_all)
 
 #transforming the data to meet model assumptions
 direct_cd_trans <- direct_claydye
-direct_cd_trans[[1]]$duration_s <- log(direct_cd_trans[[1]]$duration_s+1)
-direct_cd_trans[[5]]$duration_s <- log(direct_cd_trans[[5]]$duration_s+1)
+direct_cd_trans[[1]]$duration_s <- log(direct_cd_trans[[1]]$duration_s)
+direct_cd_trans[[5]]$duration_s <- log(direct_cd_trans[[5]]$duration_s)
 
 #the transformed models
 d_dur_cd_chase_trans <- update(d_dur_cd_chase, . ~ .,
@@ -534,15 +560,8 @@ d_dur_cd_chase_trans <- update(d_dur_cd_chase, . ~ .,
 d_dur_cd_angr_trans <- update(d_dur_cd_angr, . ~ ., data = direct_cd_trans[[5]])
 
 #checking the transformed model assumptions
-plot(d_dur_cd_chase_trans)
-plot(d_dur_cd_angr_trans)
-
-#analyzing the results
-Anova(d_dur_cd_chase_trans)
-Anova(d_dur_cd_lat)
-Anova(d_dur_cd_foll)
-Anova(d_dur_cd_angr_trans)
-Anova(d_dur_cd_all)
+#plot(d_dur_cd_chase_trans)
+#plot(d_dur_cd_angr_trans)
 
 
 #the dye vs dye models
@@ -560,11 +579,11 @@ d_dur_dd_angr <- update(d_dur_dd_chase, . ~ ., data = direct_dyedye[[5]])
 d_dur_dd_all <- update(d_dur_dd_chase, . ~ ., data = direct_dyedye[[6]])
 
 #checking the model assumptions
-plot(d_dur_dd_chase)
-plot(d_dur_dd_lat)
-plot(d_dur_dd_foll) #assumptions not met
-plot(d_dur_dd_angr)
-plot(d_dur_dd_all) #assumptions not met
+#plot(d_dur_dd_chase)
+#plot(d_dur_dd_lat)
+#plot(d_dur_dd_foll) #assumptions not met
+#plot(d_dur_dd_angr)
+#plot(d_dur_dd_all) #assumptions not met
 
 #transforming the data to meet model assumptions
 direct_dd_trans <- direct_dyedye
@@ -577,15 +596,47 @@ d_dur_dd_chase_trans <- update(d_dur_dd_chase, . ~ .,
 d_dur_dd_all_trans <- update(d_dur_dd_all, . ~ ., data = direct_dd_trans[[6]])
 
 #checking the transformed model assumptions
-plot(d_dur_dd_chase_trans)
-plot(d_dur_dd_all_trans)
+#plot(d_dur_dd_chase_trans)
+#plot(d_dur_dd_all_trans)
 
-#analyzing the results
-Anova(d_dur_dd_chase_trans)
-Anova(d_dur_dd_lat)
-Anova(d_dur_dd_foll)
-Anova(d_dur_dd_angr)
-Anova(d_dur_dd_all_trans)
+
+#analyzing the results of the LMs and putting them in tibbles within a list for
+#easy export
+results_lm <- list()
+results_lm[[1]] <- tidy(Anova(d_dur_cd_chase_trans))
+results_lm[[2]] <- tidy(Anova(d_dur_cd_lat))
+results_lm[[3]] <- tidy(Anova(d_dur_cd_foll))
+results_lm[[4]] <- tidy(Anova(d_dur_cd_angr_trans))
+results_lm[[5]] <- tidy(Anova(d_dur_cd_all))
+results_lm[[6]] <- tidy(Anova(d_dur_dd_chase_trans))
+results_lm[[7]] <- tidy(Anova(d_dur_dd_lat))
+results_lm[[8]] <- tidy(Anova(d_dur_dd_foll))
+results_lm[[9]] <- tidy(Anova(d_dur_dd_angr))
+results_lm[[10]] <- tidy(Anova(d_dur_dd_all_trans))
+
+#adding columns with additional identifying information to all tibbles within
+#the results list
+dependent_variables <- c("chasing", "lateral_display", "following",
+                         "aggregated_aggression", "all_behaviors",
+                         "chasing", "lateral_display", "following",
+                         "aggregated_aggression", "all_behaviors")
+for (i in (1:5)) {
+  results_lm[[i]]$experiments <- "claydye"
+  results_lm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+for (i in 6:10) {
+  results_lm[[i]]$experiments <- "dyedye"
+  results_lm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+#combining the LM results list into a single tibble
+results_lm_coll <- do.call(rbind, results_lm)
+#reordering the columns to be more intuitive
+results_lm_coll <- results_lm_coll %>%
+                   select(experiments, dependent_variable, term, sumsq, df,
+                          statistic, p.value)
+
+#exporting the results to .csv
+write_csv(results_lm_coll, "direct_comparison_BORIS_duration_LMs.csv")
 ```
 
 
@@ -609,12 +660,12 @@ f_con_cd_angr <- update(f_con_cd_chase, . ~ ., data = full_claydye[[5]])
 f_con_cd_all <- update(f_con_cd_chase, . ~ ., data = full_claydye[[6]])
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = f_con_cd_chase))
-plot(simulateResiduals(fittedModel = f_con_cd_lat)) #assumptions not met
-plot(simulateResiduals(fittedModel = f_con_cd_cont))
-plot(simulateResiduals(fittedModel = f_con_cd_foll)) #assumptions not met
-plot(simulateResiduals(fittedModel = f_con_cd_angr))
-plot(simulateResiduals(fittedModel = f_con_cd_all))
+#plot(simulateResiduals(fittedModel = f_con_cd_chase))
+#plot(simulateResiduals(fittedModel = f_con_cd_lat)) #assumptions not met
+#plot(simulateResiduals(fittedModel = f_con_cd_cont))
+#plot(simulateResiduals(fittedModel = f_con_cd_foll)) #assumptions not met
+#plot(simulateResiduals(fittedModel = f_con_cd_angr))
+#plot(simulateResiduals(fittedModel = f_con_cd_all))
 
 #transforming the data to meet model assumptions
 full_cd_trans <- full_claydye
@@ -628,21 +679,10 @@ f_con_cd_lat_trans <- update(f_con_cd_lat, . ~ ., data = full_cd_trans[[2]])
 f_con_cd_foll_trans <- update(f_con_cd_foll, . ~ ., data = full_cd_trans[[4]])
 
 #testing the model assumptions
-plot(simulateResiduals(fittedModel = f_con_cd_lat_trans))
-plot(simulateResiduals(fittedModel = f_con_cd_foll_trans))
+#plot(simulateResiduals(fittedModel = f_con_cd_lat_trans))
+#plot(simulateResiduals(fittedModel = f_con_cd_foll_trans))
 
-#analyzing the results
-Anova(f_con_cd_chase)
-Anova(f_con_cd_lat_trans)
-Anova(f_con_cd_cont)
-Anova(f_con_cd_foll_trans)
-Anova(f_con_cd_angr)
-Anova(f_con_cd_all)
 
-#post hoc comparisons of the significant results
-f_con_cd_cont %>% emmeans(pairwise ~ experiment:time)
-f_con_cd_angr %>% emmeans(pairwise ~ experiment:time)
-f_con_cd_all %>% emmeans(pairwise ~ experiment:time)
 
 
 #the dye vs dye models
@@ -662,35 +702,88 @@ f_con_dd_angr <- update(f_con_cd_chase, . ~ ., data = full_dyedye[[5]])
 f_con_dd_all <- update(f_con_cd_chase, . ~ ., data = full_dyedye[[6]])
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = f_con_dd_chase))
-plot(simulateResiduals(fittedModel = f_con_dd_lat)) #assumptions not met
-plot(simulateResiduals(fittedModel = f_con_dd_cont))
-plot(simulateResiduals(fittedModel = f_con_dd_foll)) #outlier
-plot(simulateResiduals(fittedModel = f_con_dd_angr))
-plot(simulateResiduals(fittedModel = f_con_dd_all))
+#plot(simulateResiduals(fittedModel = f_con_dd_chase))
+#plot(simulateResiduals(fittedModel = f_con_dd_lat)) #assumptions not met
+#plot(simulateResiduals(fittedModel = f_con_dd_cont))
+#plot(simulateResiduals(fittedModel = f_con_dd_foll)) #outlier
+#plot(simulateResiduals(fittedModel = f_con_dd_angr))
+#plot(simulateResiduals(fittedModel = f_con_dd_all))
 
 #transforming the data to meet model assumptions
 full_dd_trans <- full_dyedye
 full_dd_trans[[2]]$behav_count <- sqrt(full_dd_trans[[2]]$behav_count) +
                                   sqrt(full_dd_trans[[2]]$behav_count+1)
+full_dd_trans[[4]]$behav_count <- sqrt(full_dd_trans[[4]]$behav_count) +
+                                  sqrt(full_dd_trans[[4]]$behav_count+1)
 
 #the transformed model
 f_con_dd_lat_trans <- update(f_con_dd_lat, . ~ ., data = full_dd_trans[[2]])
+f_con_dd_foll_trans <- update(f_con_dd_foll, . ~ ., data = full_dd_trans[[4]])
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = f_con_dd_lat_trans))
+#plot(simulateResiduals(fittedModel = f_con_dd_lat_trans))
+#plot(simulateResiduals(fittedModel = f_con_dd_foll_trans))
 
-#analyzing the results
-Anova(f_con_dd_chase)
-Anova(f_con_dd_lat_trans)
-Anova(f_con_dd_cont)
-Anova(f_con_dd_foll)###
-Anova(f_con_dd_angr)
-Anova(f_con_dd_all)
 
-#post hoc comparisons of significant results
-f_con_dd_foll %>% emmeans(pairwise ~ treatment:time)
-f_con_dd_foll %>% emmeans(pairwise ~ experiment:time)
+#analyzing the results of the LMMs and putting them in tibbles within a list for
+#easy export
+results_lmm <- list()
+results_lmm[[1]] <- tidy(Anova(f_con_cd_chase))
+results_lmm[[2]] <- tidy(Anova(f_con_cd_lat_trans))
+results_lmm[[3]] <- tidy(Anova(f_con_cd_cont))
+results_lmm[[4]] <- tidy(Anova(f_con_cd_foll_trans))
+results_lmm[[5]] <- tidy(Anova(f_con_cd_angr))
+results_lmm[[6]] <- tidy(Anova(f_con_cd_all))
+results_lmm[[7]] <- tidy(Anova(f_con_dd_chase))
+results_lmm[[8]] <- tidy(Anova(f_con_dd_lat_trans))
+results_lmm[[9]] <- tidy(Anova(f_con_dd_cont))
+results_lmm[[10]] <- tidy(Anova(f_con_dd_foll_trans))
+results_lmm[[11]] <- tidy(Anova(f_con_dd_angr))
+results_lmm[[12]] <- tidy(Anova(f_con_dd_all))
+
+#adding columns with additional identifying information to all tibbles within
+#the results list
+dependent_variables <- c("chasing", "lateral_display", "aggressive_contact",
+                         "following", "aggregated_aggression", "all_behaviors",
+                         "chasing", "lateral_display", "aggressive_contact",
+                         "following", "aggregated_aggression", "all_behaviors")
+for (i in 1:6) {
+  results_lmm[[i]]$experiments <- "claydye"
+  results_lmm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+for (i in 7:12) {
+  results_lmm[[i]]$experiments <- "dyedye"
+  results_lmm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+#combining the LMM results list into a single tibble
+results_lmm_coll <- do.call(rbind, results_lmm)
+#reordering the columns to be more intuitive
+results_lmm_coll <- results_lmm_coll %>%
+                    select(experiments, dependent_variable, term, df, statistic,
+                           p.value)
+
+#post hoc pairwise comparisons of the significant results
+pair_lmm <- list()
+pair_lmm[[1]] <- as.data.frame(pairs(emmeans(f_con_cd_cont, ~ experiment |
+                                                              time)))
+pair_lmm[[2]] <- as.data.frame(pairs(emmeans(f_con_cd_angr, ~ experiment |
+                                                              time)))
+pair_lmm[[3]] <- as.data.frame(pairs(emmeans(f_con_cd_all, ~ experiment |
+                                                             time)))
+
+for (i in 1:3) {
+  pair_lmm[[i]]$experiments <- "claydye"
+}
+pair_lmm[[1]]$dependent_variable <- "aggressive_contact"
+pair_lmm[[2]]$dependent_variable <- "aggregated_aggression"
+pair_lmm[[3]]$dependent_variable <- "all_behaviors"
+pair_lmm_coll <- do.call(rbind, pair_lmm)
+pair_lmm_coll <- pair_lmm_coll %>%
+                 select(experiments, dependent_variable, everything())
+
+#exporting the results to .csv
+write_csv(results_lmm_coll, "full_comparison_BORIS_count_LMMs.csv")
+write_csv(pair_lmm_coll, "full_pairwise_comparison_BORIS_count_LMMs.csv")
 ```
 
 
@@ -712,18 +805,11 @@ f_dur_cd_angr <- update(f_dur_cd_chase, . ~ ., data = full_claydye[[5]])
 f_dur_cd_all <- update(f_dur_cd_chase, . ~ ., data = full_claydye[[6]])
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = f_dur_cd_chase))
-plot(simulateResiduals(fittedModel = f_dur_cd_lat)) #outliers
-plot(simulateResiduals(fittedModel = f_dur_cd_foll))
-plot(simulateResiduals(fittedModel = f_dur_cd_angr))
-plot(simulateResiduals(fittedModel = f_dur_cd_all))
-
-#analyzing the results
-Anova(f_dur_cd_chase)
-Anova(f_dur_cd_lat)
-Anova(f_dur_cd_foll)
-Anova(f_dur_cd_angr)
-Anova(f_dur_cd_all)
+#plot(simulateResiduals(fittedModel = f_dur_cd_chase))
+#plot(simulateResiduals(fittedModel = f_dur_cd_lat)) #outliers
+#plot(simulateResiduals(fittedModel = f_dur_cd_foll))
+#plot(simulateResiduals(fittedModel = f_dur_cd_angr))
+#plot(simulateResiduals(fittedModel = f_dur_cd_all))
 
 
 #the dye/dye comparison models
@@ -741,12 +827,11 @@ f_dur_dd_angr <- update(f_dur_dd_chase, . ~ ., data = full_dyedye[[5]])
 f_dur_dd_all <- update(f_dur_dd_chase, . ~ ., data = full_dyedye[[6]])
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = f_dur_dd_chase)) #assumptions not met
-plot(simulateResiduals(fittedModel = f_dur_dd_lat))
-plot(simulateResiduals(fittedModel = f_dur_dd_foll))
-plot(simulateResiduals(fittedModel = f_dur_dd_angr)) #assumptions not met
-plot(simulateResiduals(fittedModel = f_dur_dd_all))
-
+#plot(simulateResiduals(fittedModel = f_dur_dd_chase)) #assumptions not met
+#plot(simulateResiduals(fittedModel = f_dur_dd_lat))
+#plot(simulateResiduals(fittedModel = f_dur_dd_foll))
+#plot(simulateResiduals(fittedModel = f_dur_dd_angr)) #assumptions not met
+#plot(simulateResiduals(fittedModel = f_dur_dd_all))
 
 #transforming the data to meet model assumptions
 full_dd_trans <- full_dyedye
@@ -758,17 +843,62 @@ f_dur_dd_chase_trans <- update(f_dur_dd_chase, . ~ ., data = full_dd_trans[[1]])
 f_dur_dd_angr_trans <- update(f_dur_dd_angr, . ~ ., data = full_dd_trans[[5]])
 
 #checking the transformed model assumptions
-plot(simulateResiduals(fittedModel = f_dur_dd_chase_trans))
-plot(simulateResiduals(fittedModel = f_dur_dd_angr_trans))
+#plot(simulateResiduals(fittedModel = f_dur_dd_chase_trans))
+#plot(simulateResiduals(fittedModel = f_dur_dd_angr_trans))
 
-#analyzing the results
-Anova(f_dur_dd_chase_trans)
-Anova(f_dur_dd_lat)
-Anova(f_dur_dd_foll)
-Anova(f_dur_dd_angr_trans)
-Anova(f_dur_dd_all)
 
-#post hoc comparisons of the significant results
-f_dur_dd_angr_trans %>% emmeans(pairwise ~ treatment:time)
-f_dur_dd_all %>% emmeans(pairwise ~ treatment)
+#analyzing the results of the LMMs and putting them in tibbles within a list for
+#easy export
+results_lmm <- list()
+results_lmm[[1]] <- tidy(Anova(f_dur_cd_chase))
+results_lmm[[2]] <- tidy(Anova(f_dur_cd_lat))
+results_lmm[[3]] <- tidy(Anova(f_dur_cd_foll))
+results_lmm[[4]] <- tidy(Anova(f_dur_cd_angr))
+results_lmm[[5]] <- tidy(Anova(f_dur_cd_all))
+results_lmm[[6]] <- tidy(Anova(f_dur_dd_chase_trans))
+results_lmm[[7]] <- tidy(Anova(f_dur_dd_lat))
+results_lmm[[8]] <- tidy(Anova(f_dur_dd_foll))
+results_lmm[[9]] <- tidy(Anova(f_dur_dd_angr_trans))
+results_lmm[[10]] <- tidy(Anova(f_dur_dd_all))
+
+#adding columns with additional identifying information to all tibbles within
+#the results list
+dependent_variables <- c("chasing", "lateral_display", "following",
+                         "aggregated_aggression", "all_behaviors",
+                         "chasing", "lateral_display", "following",
+                         "aggregated_aggression", "all_behaviors")
+for (i in 1:5) {
+  results_lmm[[i]]$experiments <- "claydye"
+  results_lmm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+for (i in 6:10) {
+  results_lmm[[i]]$experiments <- "dyedye"
+  results_lmm[[i]]$dependent_variable <- dependent_variables[[i]]
+}
+#combining the LMM results list into a single tibble
+results_lmm_coll <- do.call(rbind, results_lmm)
+results_lmm_coll <- results_lmm_coll %>%
+                    select(experiments, dependent_variable, term, df, statistic,
+                           p.value)
+
+#post hoc pairwise comparisons of the significant LMM results
+pair_lmm <- list()
+pair_lmm[[1]] <- as.data.frame(pairs(emmeans(f_dur_dd_angr_trans, ~ treatment |
+                                                                    time)))
+pair_lmm[[2]] <- as.data.frame(pairs(emmeans(f_dur_dd_all, ~ treatment)))
+
+for (i in 1:2) {
+  pair_lmm[[i]]$experiments <- "dyedye"
+}
+pair_lmm[[1]]$dependent_variable <- "aggregated_aggression"
+pair_lmm[[2]]$dependent_variable <- "all_behaviors"
+for (i in 1:2) {
+  pair_lmm[[i]] <- pair_lmm[[i]] %>%
+                   select(experiments, dependent_variable, everything())
+}
+
+#exporting the results to .csv
+write_csv(results_lmm_coll, "full_comparison_BORIS_duration_LMMs.csv")
+write_csv(pair_lmm[[1]], "full_pairwise_aggregated_aggression_duration_LMMs.csv")
+write_csv(pair_lmm[[2]], "full_pairwise_all_behaviors_duration_LMMs.csv")
 ```

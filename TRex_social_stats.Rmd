@@ -47,6 +47,7 @@ library(glmmTMB)
 library(emmeans)
 library(car)
 library(DHARMa)
+library(broom)
 
 #importing the data
 #chronic_clay <- read_csv("2week_clay_social_data.csv")
