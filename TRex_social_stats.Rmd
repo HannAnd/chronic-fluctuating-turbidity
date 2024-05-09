@@ -317,9 +317,9 @@ claydye_pol <- update(claydye_shoal, polarity ~ .)
 dyedye_shoal <- glmmTMB(shoal_area ~ treatment*experiment*time + (1|shoalID),
                         data = full_dyedye)
 #mean neighbor distance
-dyedye_neigh <- update(claydye_shoal, mean_neighbor ~ .)
+dyedye_neigh <- update(dyedye_shoal, mean_neighbor ~ .)
 #polarity
-dyedye_pol <- update(claydye_shoal, polarity ~ .)
+dyedye_pol <- update(dyedye_shoal, polarity ~ .)
 
 #checking the model assumptions
 #plot(simulateResiduals(fittedModel = dyedye_shoal))
@@ -357,13 +357,13 @@ results_lmm_coll <- results_lmm_coll %>%
                            p.value)
 
 #post hoc pairwise comparisons of the significant LMM results
-pair_lmm <- as.data.frame(pairs(emmeans(claydye_pol, ~ treatment | time)))
+pair_lmm <- as.data.frame(pairs(emmeans(claydye_shoal, ~ treatment | time)))
 pair_lmm$experiments <- "claydye"
-pair_lmm$dependent_variable <- "polarity"
+pair_lmm$dependent_variable <- "shoal_area"
 pair_lmm <- pair_lmm %>%
             select(experiments, dependent_variable, everything())
 
 #exporting the results to .csv
 write_csv(results_lmm_coll, "full_comparison_proximity_LMMs.csv")
-write_csv(pair_lmm, "full_comparison_pairwise_polarity_LMM.csv")
+write_csv(pair_lmm, "full_comparison_pairwise_shoal_LMM.csv")
 ```

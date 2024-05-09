@@ -883,22 +883,26 @@ results_lmm_coll <- results_lmm_coll %>%
 
 #post hoc pairwise comparisons of the significant LMM results
 pair_lmm <- list()
-pair_lmm[[1]] <- as.data.frame(pairs(emmeans(f_dur_dd_angr_trans, ~ treatment |
+pair_lmm[[1]] <- as.data.frame(pairs(emmeans(f_dur_cd_foll, ~ treatment)))
+pair_lmm[[2]] <- as.data.frame(pairs(emmeans(f_dur_dd_angr_trans, ~ treatment |
                                                                     time)))
-pair_lmm[[2]] <- as.data.frame(pairs(emmeans(f_dur_dd_all, ~ treatment)))
+pair_lmm[[3]] <- as.data.frame(pairs(emmeans(f_dur_dd_all, ~ treatment)))
 
-for (i in 1:2) {
+pair_lmm[[1]]$experiments <- "claydye"
+for (i in 2:3) {
   pair_lmm[[i]]$experiments <- "dyedye"
 }
-pair_lmm[[1]]$dependent_variable <- "aggregated_aggression"
-pair_lmm[[2]]$dependent_variable <- "all_behaviors"
-for (i in 1:2) {
+pair_lmm[[1]]$dependent_variable <- "following"
+pair_lmm[[2]]$dependent_variable <- "aggregated_aggression"
+pair_lmm[[3]]$dependent_variable <- "all_behaviors"
+for (i in 1:3) {
   pair_lmm[[i]] <- pair_lmm[[i]] %>%
                    select(experiments, dependent_variable, everything())
 }
+pair_lmm_coll <- rbind(pair_lmm[[1]], pair_lmm[[3]])
 
 #exporting the results to .csv
 write_csv(results_lmm_coll, "full_comparison_BORIS_duration_LMMs.csv")
-write_csv(pair_lmm[[1]], "full_pairwise_aggregated_aggression_duration_LMMs.csv")
+write_csv(pair_lmm_coll, "full_pairwise_oneway_comparisons_duration_LMMs.csv")
 write_csv(pair_lmm[[2]], "full_pairwise_all_behaviors_duration_LMMs.csv")
 ```

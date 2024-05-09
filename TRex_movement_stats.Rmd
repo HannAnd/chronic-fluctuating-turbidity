@@ -397,36 +397,39 @@ pair_lmm[[3]] <- as.data.frame(pairs(emmeans(claydye_dist, ~ treatment |
                                                              experiment |
                                                              time)))
 pair_lmm[[4]] <- as.data.frame(pairs(emmeans(dyedye_speed, ~ treatment | time)))
-pair_lmm[[5]] <- as.data.frame(pairs(emmeans(dyedye_activ, ~ treatment)))
-pair_lmm[[6]] <- as.data.frame(pairs(emmeans(dyedye_dist, ~ treatment | time)))
+pair_lmm[[5]] <- as.data.frame(pairs(emmeans(dyedye_dist, ~ treatment | time)))
 
 for (i in 1:3) {
   pair_lmm[[i]]$experiments <- "claydye"
 }
-for (i in 4:6) {
+for (i in 4:5) {
   pair_lmm[[i]]$experiments <- "dyedye"
 }
 pair_lmm[[1]]$dependent_variable <- "mean_speed"
 pair_lmm[[2]]$dependent_variable <- "max_speed"
 pair_lmm[[3]]$dependent_variable <- "total_distance"
 pair_lmm[[4]]$dependent_variable <- "mean_speed"
-pair_lmm[[5]]$dependent_variable <- "activity_ratio"
-pair_lmm[[6]]$dependent_variable <- "total_distance"
+pair_lmm[[5]]$dependent_variable <- "total_distance"
 pair_lmm_coll_three <- rbind(pair_lmm[[1]], pair_lmm[[3]])
 pair_lmm_coll_two <- rbind(pair_lmm[[2]], pair_lmm[[4]])
-pair_lmm_coll_two <- rbind(pair_lmm_coll_two, pair_lmm[[6]])
+pair_lmm_coll_two <- rbind(pair_lmm_coll_two, pair_lmm[[5]])
 pair_lmm_coll_three <- pair_lmm_coll_three %>%
                        select(experiments, dependent_variable, everything())
 pair_lmm_coll_two <- pair_lmm_coll_two %>%
                        select(experiments, dependent_variable, everything())
 
 #post hoc pairwise comparisons of the significant GLMM result
-pair_glmm <- as.data.frame(pairs(emmeans(beta_claydye_activ, ~ treatment)))
-pair_glmm$experiments <- "claydye"
-pair_glmm$dependent_variable <- "activity_ratio"
-pair_glmm <- pair_glmm %>%
-             select(experiments, dependent_variable, estimate, SE, df, z.ratio,
-                    p.value)
+pair_glmm <- list()
+pair_glmm[[1]] <- as.data.frame(pairs(emmeans(beta_claydye_activ, ~ treatment)))
+pair_glmm[[2]] <- as.data.frame(pairs(emmeans(beta_dyedye_activ, ~ treatment)))
+pair_glmm[[1]]$experiments <- "claydye"
+pair_glmm[[2]]$experiments <- "dyedye"
+for (i in 1:2) {
+  pair_glmm[[i]]$dependent_variable <- "activity_ratio"
+}
+pair_glmm_coll <- rbind(pair_glmm[[1]], pair_glmm[[2]])
+pair_glmm_coll <- pair_glmm_coll %>%
+                  select(experiments, dependent_variable, everything())
 
 
 #exporting the results to .csv
@@ -434,6 +437,5 @@ write_csv(results_lmm_coll, "full_comparison_movement_LMMs.csv")
 write_csv(results_glmm_coll, "full_comparison_movement_GLMMs.csv")
 write_csv(pair_lmm_coll_three, "full_pairwise_threeway_interaction_movement_LMMs.csv")
 write_csv(pair_lmm_coll_two, "full_pairwise_twoway_interaction_movement_LMMs.csv")
-write_csv(pair_lmm[[5]], "full_pairwise_no_interaction_movement_LMMs.csv")
-write_csv(pair_glmm, "full_pairwise_comparison_movement_GLMMs.csv")
+write_csv(pair_glmm_coll, "full_pairwise_comparison_movement_GLMMs.csv")
 ```
