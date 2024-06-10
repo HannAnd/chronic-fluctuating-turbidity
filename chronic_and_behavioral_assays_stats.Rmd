@@ -1,0 +1,189 @@
+---
+title: "Chronic Clay Statistics"
+author: "Hannah Anderson"
+date: "2024-06-05"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Introduction
+
+These are the statistical analyses for the manuscript [manuscript ID here].
+These analyses include three(?) experiments. In brief, these experiments were
+conducted to observe the behavior of shoals of zebrafish under control
+visibility (clear), consistently poor visibility (stable) and fluctuating
+visibility (flux). All three shared the same basic treatment conditions, though
+behavioral measures and the rate of fluctuation (in the flux condition) varied.
+
+Additional info here.
+
+See readme for full explanation of methods.
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+setwd("C://Users/hande/Documents/R/fluctuating-turbidity")
+library(tidyverse)
+library(glmmTMB)
+library(emmeans)
+library(car)
+library(DHARMa)
+library(broom)
+
+#importing the data
+all_chronic_proxim <- read_csv("chronic_clay_social_data.csv")
+all_chronic_move <- read_csv("chronic_clay_movement_data.csv")
+#all_chronic_boris <- read_csv("chronic_clay_BORIS_all.csv")
+```
+
+
+## Proximity Analyses
+
+-full comparison stats of entire chronic clay experiment
+-direct comparison stats of entire chronic clay experiment
+  -for both of the above I won't be using the afternoon recordings from
+   day 1 and 2
+-acute analysis of behavioral changes over first two days/fluctuations
+  -will use all four recordings from day 1 and 2
+
+```{r proximity}
+###Chronic Analyses
+
+#filtering out the afternoon recordings from day 1 and 2 for consistent
+#recording time (morning)
+chronic_proxim <- all_chronic_proxim %>%
+                  filter(recording != "rec2")
+chronic_proxim <- chronic_proxim %>%
+                  filter(recording != "rec4")
+#re-numbering the recordings for the chronic/long-term analysis to correspond to
+#the day of the recording rather than the order
+chronic_proxim <- chronic_proxim %>%
+                  mutate(recording = case_match(recording,
+                                                "rec1" ~ 1,
+                                                "rec3" ~ 2,
+                                                "rec5" ~ 7,
+                                                "rec7" ~ 8,
+                                                "rec8" ~ 13,
+                                                "rec9" ~ 14))
+chronic_proxim <- chronic_proxim %>%
+                  rename_at("recording", ~"recording_day")
+
+
+##Full Comparison Models
+
+#mean shoal area
+f_shoal <- lm(shoal_area ~ treatment*recording_day*sex, data = chronic_proxim)
+#mean neighbor distance
+f_neigh <- update(f_shoal, mean_neighbor ~ .)
+#polarity
+f_polar <- update(f_shoal, polarity ~ .)
+
+#checking the model assumptions
+plot(simulateResiduals(fittedModel = f_shoal)) #assumptions not met
+plot(simulateResiduals(fittedModel = f_neigh))
+plot(simulateResiduals(fittedModel = f_polar)) #assumptions not met
+
+#transforming the shoal area data to meet model assumptions
+trans_proxim <- chronic_proxim
+trans_proxim$shoal_area <- log(chronic_proxim$shoal_area)
+trans_proxim$polarity <- asin(sqrt(trans_proxim$polarity))
+
+#the transformed model
+f_trans_shoal <- update(f_shoal, . ~ ., data = trans_proxim)
+
+#checking the transformed model assumptions
+plot(simulateResiduals(fittedModel = f_trans_shoal))
+
+#using an alternate family model to meet polarity model assumptions
+f_beta_polar <- glmmTMB(polarity ~ treatment*recording_day*sex,
+                        data = chronic_proxim,
+                        family = beta_family(link = "logit"))
+
+#checking the GLM model assumptions
+plot(simulateResiduals(fittedModel = f_beta_polar))
+
+
+#analyzing the results of the LMs and putting them in tibbles within a list for
+#easy export
+results_lm <- list()
+results_lm[[1]] <- tidy(Anova(f_trans_shoal)) #shoal area
+results_lm[[2]] <- tidy(Anova(f_neigh)) #neighbor distance
+
+#adding a column to identify the measure
+results_lm[[1]]$dependent_variable <- "shoal_area"
+results_lm[[2]]$dependent_variable <- "neighbor_distance"
+
+#combining the LM results list into a single tibble
+results_lm_coll <- rbind(results_lm[[1]], results_lm[[2]])
+
+#analyzing the results of the GLM and placing in a tibble
+results_glm <- tidy(Anova(f_beta_polar))
+f_beta_polar$dependent_variable <- "polarity"
+
+#exporting the results to .csv
+write_csv(results_lm_coll, "full_chronic_proximity_LMs.csv")
+write_csv(results_glm, "full_chronic_proximity_GLM.csv")
+
+
+
+##Direct Comparison Models
+
+#sub-setting the data to only include recordings where the stable and flux
+#conditions are the same visibility level for the direct comparisons
+direct_proxim <- chronic_proxim %>%
+                 filter(recording_day == 2 |
+                        recording_day == 8 |
+                        recording_day == 14)
+
+#mean shoal area
+d_shoal <- lm(shoal_area ~ treatment*recording_day*sex, data = direct_proxim)
+#mean neighbor distance
+d_neigh <- update(d_shoal, mean_neighbor ~ .)
+#polarity
+d_polar <- update(d_shoal, polarity ~ .)
+
+plot(simulateResiduals(fittedModel = d_shoal))
+plot(simulateResiduals(fittedModel = d_neigh))
+plot(simulateResiduals(fittedModel = d_polar))
+
+
+
+###Acute Analyses
+
+#sub-setting the data to only include the first four recordings to observe
+#the acute effects of treatment
+acute_proxim <- all_chronic_proxim %>%
+                filter(recording == c("rec1", "rec2", "rec3", "rec4"))
+#converting the recording ID from a string to a numeric for analysis purposes
+acute_proxim <- acute_proxim %>%
+                mutate(recording = case_match(recording,
+                                              "rec1" ~ 1,
+                                              "rec2" ~ 2,
+                                              "rec3" ~ 3,
+                                              "rec4" ~ 4))
+
+#mean shoal area
+a_shoal <- lm(shoal_area ~ treatment*recording*sex, data = acute_proxim)
+#mean neighbor distance
+a_neigh <- update(d_shoal, mean_neighbor ~ .)
+#polarity
+a_polar <- update(d_shoal, polarity ~ .)
+
+#checking the model assumptions
+plot(simulateResiduals(fittedModel = a_shoal)) #assumptions not met
+plot(simulateResiduals(fittedModel = a_neigh))
+plot(simulateResiduals(fittedModel = a_polar))
+
+#transforming the data to meet model assumptions
+trans_proxim <- acute_proxim
+trans_proxim$shoal_area <- log(trans_proxim$shoal_area)
+
+#the transformed model
+a_trans_shoal <- update(a_shoal, . ~ ., data = trans_proxim)
+
+#checking the transformed model assumptions
+plot(simulateResiduals(fittedModel = a_trans_shoal))
+```
