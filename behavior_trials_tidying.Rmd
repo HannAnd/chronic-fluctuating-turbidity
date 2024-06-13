@@ -46,6 +46,11 @@ sana_trim$tankID <- paste0("tank", sana_trim$tankID)
 #combining the files from the different scorers
 all_data <- rbind(emily_trim, sana_trim)
 
+#renaming the recording values to be more intuitive
+all_data <- all_data %>%
+            mutate(recording = case_match(recording, 1 ~ "morning",
+                                                     2 ~ "afternoon"))
+
 #pulling the feeding trial data from the compiled data set
 feeding <- all_data %>%
            filter(behavior == "feeding")
