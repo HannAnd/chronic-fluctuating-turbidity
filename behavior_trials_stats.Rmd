@@ -1,0 +1,61 @@
+---
+title: "Turbidity Behavioral Trials Analyses"
+author: "Hannah Anderson"
+date: "2024-06-13"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+setwd("C://Users/hande/Documents/R/fluctuating-turbidity")
+
+library(tidyverse)
+library(glmmTMB)
+library(car)
+library(broom)
+library(DHARMa)
+library(emmeans)
+
+feeding_data <- read_csv("flux_turb_feeding_trial.csv")
+shelter_data <- read_csv("flux_turb_shelter_trial.csv")
+color_data <- read_csv("flux_turb_color_trial.csv")
+```
+
+
+
+## Feeding Trial Analysis
+
+```{r feeding}
+feeding_model <- glmmTMB(duration_s ~ treatment*recording + (1|tankID),
+                         data = feeding_data)
+
+#checking the model assumptions
+plot(simulateResiduals(fittedModel = feeding_model)) #assumptions not met
+
+#transforming the data to meed model assumptions
+trans_feed <- feeding_data
+trans_feed$duration_s <- log(trans_feed$duration_s)
+
+#the transformed model
+trans_feeding_model <- update(feeding_model, . ~ ., data = trans_feed)
+
+#checking the transformed model assumptions
+plot(simulateResiduals(fittedModel = trans_feeding_model))
+
+#analyzing the results and putting them in a tibble
+feed_results <- tidy(Anova(trans_feeding_model))
+
+#checking if the significant interaction is affecting the significant main
+#main effect
+emmip(trans_feeding_model, treatment ~ recording) #it is
+
+#post hoc pairwise comparisons of the significant results
+feed_pairwise <- as.data.frame(pairs(emmeans(trans_feeding_model, ~ treatment |
+                                                                   recording)))
+#exporting results to .csv
+write_csv(feed_results, "feeding_trial_results.csv")
+write_csv(feed_pairwise, "feeding_trial_pairwise_comparisons.csv")
+```
