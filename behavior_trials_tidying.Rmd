@@ -15,7 +15,7 @@ emily_data <- read_csv("flux_turb_behav_trials_Emily.csv")
 sana_data <- read_csv("flux_turb_behav_trials_Sana.csv")
 
 #the tank IDs in each treatment
-fluxtanks <- c("tank4-1", "tank5-2", "tank7-2", "tank6-1", "tank6-3", "tank1-3",
+fluxtanks <- c("tank4-1", "tank7-2", "tank6-1", "tank6-3", "tank1-3",
                "tank1-2", "tank2-3")
 stabletanks <- c("tank8-2", "tank3-1", "tank5-3", "tank6-2", "tank1-1",
                  "tank8-1", "tank7-1", "tank2-2")
@@ -81,6 +81,12 @@ all_rec <- rbind(all_rec, missing)
 missing <- c("tank6-1", 2, "feeding", NA)
 feeding <- rbind(feeding, missing)
 
+#adding the treatment conditions
+feeding$treatment <- feeding$tankID %>%
+                     fct_collapse(flux = fluxtanks,
+                                  stable = stabletanks,
+                                  clear = cleartanks)
+
 #writing the cleaned feeding trial data to .csv
 write_csv(feeding, "flux_turb_feeding_trial.csv")
 ```
@@ -120,6 +126,12 @@ shelter_all <- merge(shelter_dura, shelter_app, by = c("tankID", "recording"),
 #zeros (the shelter was not used for these trials)
 shelter_all <- shelter_all %>%
                replace(is.na(.), 0)
+
+#adding the treatment conditions
+shelter_all$treatment <- shelter_all$tankID %>%
+                         fct_collapse(flux = fluxtanks,
+                                      stable = stabletanks,
+                                      clear = cleartanks)
 
 #writing the cleaned shelter trial data to .csv
 write_csv(shelter_all, "flux_turb_shelter_trial.csv")
@@ -170,6 +182,12 @@ color_complete <- color_all %>%
                   complete(tankID, recording, color, fill =
                                                      list(swim_over = 0,
                                                           swim_border= 0))
+
+#adding the treatment conditions
+color_complete$treatment <- color_complete$tankID %>%
+                            fct_collapse(flux = fluxtanks,
+                                         stable = stabletanks,
+                                         clear = cleartanks)
 
 #writing the cleaned color preference trial data to .csv
 write_csv(color_complete, "flux_turb_color_trial.csv")
