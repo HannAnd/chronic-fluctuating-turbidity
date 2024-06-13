@@ -1,5 +1,5 @@
 ---
-title: "Turbidity Behavioral Trials"
+title: "Turbidity Behavioral Trials Data Tidying"
 author: "Hannah Anderson"
 date: "2024-02-09"
 output: pdf_document
@@ -45,64 +45,15 @@ sana_trim$tankID <- paste0("tank", sana_trim$tankID)
 
 #combining the files from the different scorers
 all_data <- rbind(emily_trim, sana_trim)
-```
 
-
-## Feeding Trial Data Cleaning
-
-```{r feeding}
-#pulling the feeding trial data from the compiled dataset
+#pulling the feeding trial data from the compiled data set
 feeding <- all_data %>%
            filter(behavior == "feeding")
-#writing the feeding trial data to .csv
-write_csv(feeding, "flux_turb_feeding_trial.csv")
-```
-
-
-## Shelter Trial Data Cleaning
-
-```{r shelter}
-#pulling the shelter trial data from the compiled dataset
+#pulling the shelter trial data from the compiled data set
 shelter <- all_data %>%
            filter(behavior %in% c("shelter_approach", "1_fish_shelter",
                                   "2_fish_shelter", "3_fish_shelter",
                                   "4_fish_shelter"))
-
-#summing the duration of time each density of fish spent in the shelter and
-#counting the number of times the fish entered/exited the shelter to cause these
-#densities
-shelter_dura <- shelter %>%
-               filter(behavior != "shelter_approach") %>%
-               group_by(tankID, recording, behavior) %>%
-               summarize(duration_s = sum(duration_s),
-                         enter_exit = as.numeric(table(behavior)))
-
-#creating an additional category that includes the total duration of all time
-#the shelter was occupied by at least one fish and adding up the total number of
-#times fish entered/exited the shelter for each trial
-shelter_all <- shelter_dura %>%
-               group_by(tankID, recording) %>%
-               summarize(duration_s = sum(duration_s),
-                         enter_exit = sum(enter_exit))
-#writing the the total summed data to .csv
-write_csv(shelter_all, "flux_shelter_trial_summed.csv")
-
-#removing the counts for each shelter level of shelter_dura for easier
-#interpretation
-shelter_dura <- shelter_dura[,1:4]
-#writing the leveled shelter duration data to .csv
-write_csv(shelter_dura, "flux_shelter_trial_levels.csv")
-
-#writing the time to approach shelter to .csv
-shelter_app <- shelter %>%
-               filter(behavior == "shelter_approach")
-write_csv(shelter_app, "flux_shelter_trial_approach.csv")
-```
-
-
-## Color Preference Trial
-
-``` {r color}
 #pulling the color preference trial data from the compiled dataset
 color <- all_data %>%
          filter(behavior %in% c("swim_border_yellow", "swim_over_yellow",
@@ -110,8 +61,111 @@ color <- all_data %>%
                                 "swim_border_purple", "swim_over_purple",
                                 "swim_border_blue", "swim_over_blue"))
 
-#counting the number of times the fish interacted with each color
-color_count <- color %>%
+#creating a complete recording list from the feeding trial's nearly-complete
+#list to fill in any missing values from other trials
+all_rec <- feeding[,1:2]
+missing <- c("tank6-1", 2)
+all_rec <- rbind(all_rec, missing)
+```
+
+
+## Feeding Trial Data Cleaning
+
+```{r feeding}
+#adding in NAs for the feeding trial that was mistakenly not recorded
+missing <- c("tank6-1", 2, "feeding", NA)
+feeding <- rbind(feeding, missing)
+
+#writing the cleaned feeding trial data to .csv
+write_csv(feeding, "flux_turb_feeding_trial.csv")
+```
+
+
+## Shelter Trial Data Cleaning
+
+```{r shelter}
+#summing the duration of time the shelter was occupied by each density level of
+#fish and counting the number of times the shelter was that density for each
+#trial
+shelter_dens <- shelter %>%
+               filter(behavior != "shelter_approach") %>%
                group_by(tankID, recording, behavior) %>%
-               summarize(behav_count = as.numeric(table(behavior)))
+               summarize(duration_s = sum(duration_s),
+                         enter_exit = as.numeric(table(behavior)))
+#adding up the shelter durations to get a total time a shelter was occupied and
+#the total number of times the shelter was entered or exited per trial
+shelter_dura <- shelter_dens %>%
+               group_by(tankID, recording) %>%
+               summarize(sheltered_time_s = sum(duration_s),
+                         enter_exit = sum(enter_exit))
+
+#prepping the shelter approach latency to be combined with the summarized
+#shelter data
+shelter_app <- shelter %>%
+               filter(behavior == "shelter_approach")
+shelter_app <- shelter_app[,c(1:2,4)]
+shelter_app <- shelter_app %>%
+               rename_at("duration_s", ~"approach_time_s")
+
+#combining the shelter approach latency and summarized shelter data into a
+#single dataframe
+shelter_all <- merge(shelter_dura, shelter_app, by = c("tankID", "recording"),
+                     all = TRUE)
+#replacing the NAs in the shelter use duration and enter/exit columns with true
+#zeros (the shelter was not used for these trials)
+shelter_all <- shelter_all %>%
+               replace(is.na(.), 0)
+
+#writing the cleaned shelter trial data to .csv
+write_csv(shelter_all, "flux_turb_shelter_trial.csv")
+```
+
+
+## Color Preference Trial
+
+``` {r color}
+#counting the number of times the fish swam over each color
+color_over <- color %>%
+              filter(behavior %in% c("swim_over_yellow", "swim_over_red",
+                                     "swim_over_purple", "swim_over_blue")) %>%
+              group_by(tankID, recording, behavior) %>%
+              summarize(swim_over = as.numeric(table(behavior)))
+#counting the number of times the fish swam around the border of each color
+color_border <- color %>%
+                filter(behavior %in% c("swim_border_yellow", "swim_border_red",
+                                       "swim_border_purple", "swim_border_blue"
+                                       )) %>%
+                group_by(tankID, recording, behavior) %>%
+                summarize(swim_border = as.numeric(table(behavior)))
+
+#changing the names of the "behavior" column to be consistent between the border
+#swim and swim over data
+color_over <- color_over %>%
+              mutate(behavior = case_match(behavior, 
+                                           "swim_over_blue" ~ "blue",
+                                           "swim_over_purple" ~ "purple",
+                                           "swim_over_red" ~ "red",
+                                           "swim_over_yellow" ~ "yellow"))
+color_border <- color_border %>%
+                mutate(behavior = case_match(behavior, 
+                                           "swim_border_blue" ~ "blue",
+                                           "swim_border_purple" ~ "purple",
+                                           "swim_border_red" ~ "red",
+                                           "swim_border_yellow" ~ "yellow"))
+
+#combining the color trial data into a single dataframe
+color_all <- merge(color_over, color_border, by = c("tankID", "recording",
+                                                    "behavior"),
+                   all = TRUE)
+color_all <- color_all %>%
+             rename_at("behavior", ~ "color")
+
+#adding in the true zero values (which BORIS does not export)
+color_complete <- color_all %>%
+                  complete(tankID, recording, color, fill =
+                                                     list(swim_over = 0,
+                                                          swim_border= 0))
+
+#writing the cleaned color preference trial data to .csv
+write_csv(color_complete, "flux_turb_color_trial.csv")
 ```
