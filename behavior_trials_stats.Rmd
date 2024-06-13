@@ -26,14 +26,15 @@ color_data <- read_csv("flux_turb_color_trial.csv")
 
 
 
-## Feeding Trial Analysis
+## Feeding Trial Analyses
 
 ```{r feeding}
+#latency to finish feeding
 feeding_model <- glmmTMB(duration_s ~ treatment*recording + (1|tankID),
                          data = feeding_data)
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = feeding_model)) #assumptions not met
+#plot(simulateResiduals(fittedModel = feeding_model)) #assumptions not met
 
 #transforming the data to meed model assumptions
 trans_feed <- feeding_data
@@ -43,9 +44,9 @@ trans_feed$duration_s <- log(trans_feed$duration_s)
 trans_feeding_model <- update(feeding_model, . ~ ., data = trans_feed)
 
 #checking the transformed model assumptions
-plot(simulateResiduals(fittedModel = trans_feeding_model))
+#plot(simulateResiduals(fittedModel = trans_feeding_model))
 
-#analyzing the results and putting them in a tibble
+#analyzing the results and putting them in a tibble for easy export
 feed_results <- tidy(Anova(trans_feeding_model))
 
 #checking if the significant interaction is affecting the significant main
@@ -58,4 +59,93 @@ feed_pairwise <- as.data.frame(pairs(emmeans(trans_feeding_model, ~ treatment |
 #exporting results to .csv
 write_csv(feed_results, "feeding_trial_results.csv")
 write_csv(feed_pairwise, "feeding_trial_pairwise_comparisons.csv")
+```
+
+
+
+## Shelter Trial Analyses
+
+```{r shelter}
+#latency to use shelter
+shelter_laten <- glmmTMB(approach_time_s ~ treatment*recording + (1|tankID),
+                         data = shelter_data)
+#total time shelter was in use
+shelter_time <- update(shelter_laten, sheltered_time_s ~ .)
+#total number of times fish entered or exited the shelter
+shelter_exit <- update(shelter_laten, enter_exit ~ .)
+
+#checking the model assumptions
+plot(simulateResiduals(fittedModel = shelter_laten))
+plot(simulateResiduals(fittedModel = shelter_time)) #assumptions not met
+plot(simulateResiduals(fittedModel = shelter_exit)) #assumptions not met
+
+#transforming the data to meet model assumptions
+trans_shelter <- shelter_data
+trans_shelter$sheltered_time_s <- log(trans_shelter$sheltered_time_s+1)
+trans_shelter$enter_exit <- log(trans_shelter$enter_exit+1)
+
+#the transformed models
+trans_shelter_time <- update(shelter_time, . ~ ., data = trans_shelter)
+trans_shelter_exit <- update(shelter_exit, . ~ ., data = trans_shelter)
+
+#checking the transformed model assumptions
+plot(simulateResiduals(fittedModel = trans_shelter_time)) #
+plot(simulateResiduals(fittedModel = trans_shelter_exit))
+```
+
+
+
+## Color Preference Trial Analyses
+
+```{r color}
+#number of times fish swam over a color
+color_over <- glmmTMB(swim_over ~ color*treatment*recording + (1|tankID),
+                      data = color_data)
+#numbr of times fish skirted the border of a color
+color_border <- update(color_over, swim_border ~ .)
+
+#checking the model assumptions
+#plot(simulateResiduals(fittedModel = color_over)) #assumptions not met
+#plot(simulateResiduals(fittedModel = color_border)) #assumptions not met
+
+#using an alternative regression family to meet model assumptions
+pois_color_over <- update(color_over, . ~ ., family = genpois(link = "log"))
+pois_color_border <- update(color_border, . ~ ., family = genpois(link = "log"))
+
+#checking the assumptions of the GLMs
+#plot(simulateResiduals(fittedModel = pois_color_over))
+#plot(simulateResiduals(fittedModel = pois_color_border))
+
+#analyzing the results
+color_results <- list()
+color_results[[1]] <- tidy(Anova(pois_color_over))
+color_results[[2]] <- tidy(Anova(pois_color_border))
+#labeling the dependent variable
+color_results[[1]]$dependent_variable <- "swim_over"
+color_results[[2]]$dependent_variable <- "swim_border"
+#combining list into single tibble for easy export
+color_results_coll <- rbind(color_results[[1]], color_results[[2]])
+
+#post hoc pairwise comparisons of the significant results
+color_pairs <- list()
+color_pairs[[1]] <- as.data.frame(pairs(emmeans(pois_color_over, ~ color)))
+color_pairs[[2]] <- as.data.frame(pairs(emmeans(pois_color_border, ~ color)))
+inter_pairs <- list()
+inter_pairs[[1]] <- as.data.frame(pairs(emmeans(pois_color_over, ~ treatment |
+                                                                   recording)))
+inter_pairs[[2]] <- as.data.frame(pairs(emmeans(pois_color_border, ~ treatment |
+                                                                   recording)))
+#labeling the results
+color_pairs[[1]]$independent_variable <- "color"
+color_pairs[[2]]$independent_variable <- "color"
+inter_pairs[[1]]$independent_variable <- "treatment:recording"
+inter_pairs[[2]]$independent_variable <- "treatment:recording"
+#combining the related results into single tibbles
+color_pairs_coll <- rbind(color_pairs[[1]], color_pairs[[2]])
+inter_pairs_coll <- rbind(inter_pairs[[1]], inter_pairs[[2]])
+
+#exporting the results to .csv
+write_csv(color_results_coll, "color_trial_results.csv")
+write_csv(color_pairs_coll, "color_trial_pairwise_main_effects.csv")
+write_csv(inter_pairs_coll, "color_trial_pairwise_interactions.csv")
 ```
