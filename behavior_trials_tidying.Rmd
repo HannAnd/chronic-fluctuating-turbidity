@@ -46,11 +46,6 @@ sana_trim$tankID <- paste0("tank", sana_trim$tankID)
 #combining the files from the different scorers
 all_data <- rbind(emily_trim, sana_trim)
 
-#renaming the recording values to be more intuitive
-all_data <- all_data %>%
-            mutate(recording = case_match(recording, 1 ~ "morning",
-                                                     2 ~ "afternoon"))
-
 #pulling the feeding trial data from the compiled data set
 feeding <- all_data %>%
            filter(behavior == "feeding")
@@ -86,6 +81,12 @@ feeding$treatment <- feeding$tankID %>%
                      fct_collapse(flux = fluxtanks,
                                   stable = stabletanks,
                                   clear = cleartanks)
+
+#renaming the recording values to be more intuitive
+feeding$recording <- as.numeric(feeding$recording)
+feeding <- feeding %>%
+           mutate(recording = case_match(recording, 1 ~ "morning",
+                                                    2 ~ "afternoon"))
 
 #writing the cleaned feeding trial data to .csv
 write_csv(feeding, "flux_turb_feeding_trial.csv")
@@ -132,6 +133,11 @@ shelter_all$treatment <- shelter_all$tankID %>%
                          fct_collapse(flux = fluxtanks,
                                       stable = stabletanks,
                                       clear = cleartanks)
+
+#renaming the recording values to be more intuitive
+shelter_all <- shelter_all %>%
+               mutate(recording = case_match(recording, 1 ~ "morning",
+                                                        2 ~ "afternoon"))
 
 #writing the cleaned shelter trial data to .csv
 write_csv(shelter_all, "flux_turb_shelter_trial.csv")
@@ -188,6 +194,11 @@ color_complete$treatment <- color_complete$tankID %>%
                             fct_collapse(flux = fluxtanks,
                                          stable = stabletanks,
                                          clear = cleartanks)
+
+#renaming the recording values to be more intuitive
+color_complete <- color_complete %>%
+                  mutate(recording = case_match(recording, 1 ~ "morning",
+                                                           2 ~ "afternoon"))
 
 #writing the cleaned color preference trial data to .csv
 write_csv(color_complete, "flux_turb_color_trial.csv")
