@@ -51,7 +51,7 @@ feed_results <- tidy(Anova(trans_feeding_model))
 
 #checking if the significant interaction is affecting the significant main
 #main effect
-emmip(trans_feeding_model, treatment ~ recording) #it is
+#emmip(trans_feeding_model, treatment ~ recording) #it is
 
 #post hoc pairwise comparisons of the significant results
 feed_pairwise <- as.data.frame(pairs(emmeans(trans_feeding_model, ~ treatment |
@@ -75,13 +75,13 @@ shelter_time <- update(shelter_laten, sheltered_time_s ~ .)
 shelter_exit <- update(shelter_laten, enter_exit ~ .)
 
 #checking the model assumptions
-plot(simulateResiduals(fittedModel = shelter_laten))
-plot(simulateResiduals(fittedModel = shelter_time)) #assumptions not met
-plot(simulateResiduals(fittedModel = shelter_exit)) #assumptions not met
+#plot(simulateResiduals(fittedModel = shelter_laten))
+#plot(simulateResiduals(fittedModel = shelter_time)) #assumptions not met
+#plot(simulateResiduals(fittedModel = shelter_exit)) #assumptions not met
 
 #transforming the data to meet model assumptions
 trans_shelter <- shelter_data
-trans_shelter$sheltered_time_s <- log(trans_shelter$sheltered_time_s+1)
+trans_shelter$sheltered_time_s <- 1/(trans_shelter$sheltered_time_s+1)
 trans_shelter$enter_exit <- log(trans_shelter$enter_exit+1)
 
 #the transformed models
@@ -89,8 +89,23 @@ trans_shelter_time <- update(shelter_time, . ~ ., data = trans_shelter)
 trans_shelter_exit <- update(shelter_exit, . ~ ., data = trans_shelter)
 
 #checking the transformed model assumptions
-plot(simulateResiduals(fittedModel = trans_shelter_time)) #
-plot(simulateResiduals(fittedModel = trans_shelter_exit))
+#plot(simulateResiduals(fittedModel = trans_shelter_time)) #
+#plot(simulateResiduals(fittedModel = trans_shelter_exit))
+
+#analyzing the results
+shelter_results <- list()
+shelter_results[[1]] <- tidy(Anova(shelter_laten))
+shelter_results[[2]] <- tidy(Anova(trans_shelter_time))
+shelter_results[[3]] <- tidy(Anova(trans_shelter_exit))
+#labeling the dependent variable
+shelter_results[[1]]$dependent_variable <- "approach_time"
+shelter_results[[2]]$dependent_variable <- "sheltered_duration"
+shelter_results[[3]]$dependent_variable <- "enters_exits"
+#combining the results into a single tibble for easy export
+shelter_results_coll <- do.call(rbind, shelter_results)
+
+#exporting the results to .csv
+write_csv(shelter_results_coll, "color_trial_shelter_results.csv")
 ```
 
 
@@ -99,7 +114,7 @@ plot(simulateResiduals(fittedModel = trans_shelter_exit))
 
 ```{r color}
 #number of times fish swam over a color
-color_over <- glmmTMB(swim_over ~ color*treatment*recording + (1|tankID),
+color_over <- glmmTMB(swim_over ~ disc_color*treatment*recording + (1|tankID),
                       data = color_data)
 #numbr of times fish skirted the border of a color
 color_border <- update(color_over, swim_border ~ .)
@@ -128,8 +143,9 @@ color_results_coll <- rbind(color_results[[1]], color_results[[2]])
 
 #post hoc pairwise comparisons of the significant results
 color_pairs <- list()
-color_pairs[[1]] <- as.data.frame(pairs(emmeans(pois_color_over, ~ color)))
-color_pairs[[2]] <- as.data.frame(pairs(emmeans(pois_color_border, ~ color)))
+color_pairs[[1]] <- as.data.frame(pairs(emmeans(pois_color_over, ~ disc_color)))
+color_pairs[[2]] <- as.data.frame(pairs(emmeans(pois_color_border,
+                                                ~ disc_color)))
 inter_pairs <- list()
 inter_pairs[[1]] <- as.data.frame(pairs(emmeans(pois_color_over, ~ treatment |
                                                                    recording)))

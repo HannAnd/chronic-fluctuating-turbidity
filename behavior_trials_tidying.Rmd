@@ -181,12 +181,12 @@ color_all <- merge(color_over, color_border, by = c("tankID", "recording",
                                                     "behavior"),
                    all = TRUE)
 color_all <- color_all %>%
-             rename_at("behavior", ~ "color")
+             rename_at("behavior", ~ "disc_color")
 
 #adding in the true zero values (which BORIS does not export)
 color_complete <- color_all %>%
-                  complete(tankID, recording, color, fill =
-                                                     list(swim_over = 0,
+                  complete(tankID, recording, disc_color, fill =
+                                                          list(swim_over = 0,
                                                           swim_border= 0))
 
 #adding the treatment conditions
