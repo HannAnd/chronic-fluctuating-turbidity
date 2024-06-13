@@ -1,0 +1,116 @@
+---
+title: "Chronic and Trial Plots"
+author: "Hannah Anderson"
+date: "2024-06-13"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+setwd("C://Users/hande/Documents/R/fluctuating-turbidity")
+library(tidyverse)
+library(ggplot2)
+library(gridExtra)
+
+feeding_data <- read_csv("flux_turb_feeding_trial.csv")
+shelter_data <- read_csv("flux_turb_shelter_trial.csv")
+color_data <- read_csv("flux_turb_color_trial.csv")
+```
+
+
+
+## Turbidity Behavior Trial Plots
+
+```{r trial}
+feed_plot <- feeding_data %>%
+  mutate(recording = fct_relevel(recording, "morning", "afternoon")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = recording, y = duration_s, fill = treatment)) +
+  geom_boxplot() +
+  xlab("Recording Time") + ylab("Latency to Finish Eating (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+approach_plot <- shelter_data %>%
+  mutate(recording = fct_relevel(recording, "morning", "afternoon")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = recording, y = approach_time_s, fill = treatment)) +
+  geom_boxplot() +
+  xlab("Recording Time") + ylab("Latency to Approach Shelter (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+shelter_plot <- shelter_data %>%
+  mutate(recording = fct_relevel(recording, "morning", "afternoon")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = recording, y = sheltered_time_s, fill = treatment)) +
+  geom_boxplot() +
+  xlab("Recording Time") + ylab("Time Shelter was Occupied (s)") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+exit_plot <- shelter_data %>%
+  mutate(recording = fct_relevel(recording, "morning", "afternoon")) %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  ggplot(aes(x = recording, y = enter_exit, fill = treatment)) +
+  geom_boxplot() +
+  xlab("Recording Time") +
+  ylab("Number of Times the Shelter was Entered/Exited") +
+  scale_fill_manual(values = c("slategray1", "wheat1", "wheat4")) +
+  theme_classic()
+
+color_morning <- color_data %>%
+  filter(recording == "morning") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  mutate(disc_color = fct_relevel(disc_color, "red", "blue", "yellow", "purple")) %>%
+  ggplot(aes(x = treatment, y = swim_over, fill = disc_color)) +
+  geom_boxplot() +
+  ggtitle("Morning") +
+  xlab("Treatment") +
+  ylab("Number of Times Discs Swum Over") +
+  scale_fill_manual(values = c("red3", "dodgerblue3", "yellow3", "darkorchid3")) +
+  theme_classic()
+
+color_after <- color_data %>%
+  filter(recording == "afternoon") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  mutate(disc_color = fct_relevel(disc_color, "red", "blue", "yellow", "purple")) %>%
+  ggplot(aes(x = treatment, y = swim_over, fill = disc_color)) +
+  geom_boxplot() +
+  ggtitle("Afternoon") +
+  xlab("Treatment") +
+  ylab("Number of Times Discs Swum Over") +
+  scale_fill_manual(values = c("red3", "dodgerblue3", "yellow3", "darkorchid3")) +
+  theme_classic()
+
+grid.arrange(color_morning, color_after, nrow = 2)
+  
+border_morning <- color_data %>%
+  filter(recording == "morning") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  mutate(disc_color = fct_relevel(disc_color, "red", "blue", "yellow", "purple")) %>%
+  ggplot(aes(x = treatment, y = swim_border, fill = disc_color)) +
+  geom_boxplot() +
+  ggtitle("Morning") +
+  xlab("Treatment") +
+  ylab("Number of Times Discs Swum Around") +
+  scale_fill_manual(values = c("red3", "dodgerblue3", "yellow3", "darkorchid3")) +
+  theme_classic()
+
+border_after <- color_data %>%
+  filter(recording == "afternoon") %>%
+  mutate(treatment = fct_relevel(treatment, "clear", "stable", "flux")) %>%
+  mutate(disc_color = fct_relevel(disc_color, "red", "blue", "yellow", "purple")) %>%
+  ggplot(aes(x = treatment, y = swim_border, fill = disc_color)) +
+  geom_boxplot() +
+  ggtitle("Afternoon") +
+  xlab("Treatment") +
+  ylab("Number of Times Discs Swum Around") +
+  scale_fill_manual(values = c("red3", "dodgerblue3", "yellow3", "darkorchid3")) +
+  theme_classic()
+
+grid.arrange(border_morning, border_after, nrow = 2)
+```
