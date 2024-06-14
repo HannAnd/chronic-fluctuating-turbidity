@@ -81,7 +81,7 @@ shelter_exit <- update(shelter_laten, enter_exit ~ .)
 
 #transforming the data to meet model assumptions
 trans_shelter <- shelter_data
-trans_shelter$sheltered_time_s <- 1/(trans_shelter$sheltered_time_s+1)
+trans_shelter$sheltered_time_s <- log(trans_shelter$sheltered_time_s)
 trans_shelter$enter_exit <- log(trans_shelter$enter_exit+1)
 
 #the transformed models
@@ -89,7 +89,7 @@ trans_shelter_time <- update(shelter_time, . ~ ., data = trans_shelter)
 trans_shelter_exit <- update(shelter_exit, . ~ ., data = trans_shelter)
 
 #checking the transformed model assumptions
-#plot(simulateResiduals(fittedModel = trans_shelter_time)) #
+#plot(simulateResiduals(fittedModel = trans_shelter_time))
 #plot(simulateResiduals(fittedModel = trans_shelter_exit))
 
 #analyzing the results

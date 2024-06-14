@@ -125,8 +125,8 @@ shelter_all <- merge(shelter_dura, shelter_app, by = c("tankID", "recording"),
                      all = TRUE)
 #replacing the NAs in the shelter use duration and enter/exit columns with true
 #zeros (the shelter was not used for these trials)
-shelter_all <- shelter_all %>%
-               replace(is.na(.), 0)
+shelter_all$enter_exit <- shelter_all$enter_exit %>%
+                          replace(is.na(.), 0)
 
 #adding the treatment conditions
 shelter_all$treatment <- shelter_all$tankID %>%
